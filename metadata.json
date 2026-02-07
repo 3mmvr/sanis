@@ -1,0 +1,9 @@
+
+{
+  "name": "sanis - Cal AI for Pets",
+  "description": "The world's first AI pet nutritionist. Track calories, macros, and water for your pets using advanced vision intelligence.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
