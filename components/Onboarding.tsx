@@ -97,21 +97,49 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Weight (kg)</label>
                   <input 
                     type="number"
+                    step="0.01"
+                    min="0.01"
+                    max="200"
                     value={pet.weight || ''}
-                    onChange={(e) => setPet({ ...pet, weight: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setPet({ ...pet, weight: undefined });
+                      } else {
+                        const num = parseFloat(value);
+                        // Round to 2 decimal places
+                        const rounded = Math.round(num * 100) / 100;
+                        setPet({ ...pet, weight: rounded });
+                      }
+                    }}
                     className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all"
-                    placeholder={pet.type === PetType.DOG ? "25" : "4.5"}
+                    placeholder={pet.type === PetType.DOG ? "25.50" : "4.67"}
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Age (years)</label>
                   <input 
                     type="number"
+                    min="0"
+                    max="50"
                     value={pet.age || ''}
-                    onChange={(e) => setPet({ ...pet, age: e.target.value ? Number(e.target.value) : undefined })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setPet({ ...pet, age: undefined });
+                      } else {
+                        const num = parseInt(value);
+                        if (num >= 0 && num <= 50) {
+                          setPet({ ...pet, age: num });
+                        }
+                      }
+                    }}
                     className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all"
                     placeholder="e.g. 3"
                   />
+                  {pet.age !== undefined && (pet.age < 0 || pet.age > 50) && (
+                    <p className="text-red-500 text-xs mt-2 font-bold">Age must be between 0 and 50 years</p>
+                  )}
                 </div>
               </div>
               <button 

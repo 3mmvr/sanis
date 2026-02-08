@@ -218,8 +218,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Weight (kg)</label>
                   <input 
                     type="number"
+                    step="0.01"
+                    min="0.01"
+                    max="200"
                     value={editingPet.weight}
-                    onChange={(e) => setEditingPet({ ...editingPet, weight: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setEditingPet({ ...editingPet, weight: 0 });
+                      } else {
+                        const num = parseFloat(value);
+                        // Round to 2 decimal places
+                        const rounded = Math.round(num * 100) / 100;
+                        setEditingPet({ ...editingPet, weight: rounded });
+                      }
+                    }}
                     className="w-full bg-slate-50 border border-black/5 rounded-[20px] px-4 py-3 font-black text-sm outline-none focus:ring-2 ring-yellow-400 transition-all"
                   />
                 </div>
@@ -230,11 +243,26 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Age (years)</label>
                   <input 
                     type="number"
+                    min="0"
+                    max="50"
                     value={editingPet.age || ''}
-                    onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value ? Number(e.target.value) : undefined })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setEditingPet({ ...editingPet, age: undefined });
+                      } else {
+                        const num = parseInt(value);
+                        if (num >= 0 && num <= 50) {
+                          setEditingPet({ ...editingPet, age: num });
+                        }
+                      }
+                    }}
                     placeholder="Optional"
                     className="w-full bg-slate-50 border border-black/5 rounded-[20px] px-4 py-3 font-black text-sm outline-none focus:ring-2 ring-yellow-400 transition-all placeholder:text-slate-300"
                   />
+                  {editingPet.age !== undefined && (editingPet.age < 0 || editingPet.age > 50) && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold">Age must be 0-50 years</p>
+                  )}
                 </div>
               </div>
 
