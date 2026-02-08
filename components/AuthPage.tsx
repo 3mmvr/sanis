@@ -161,6 +161,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onGuestContinue 
           <p className="text-center text-xs text-slate-400 font-bold mt-3">
             Your data will be stored locally on this device
           </p>
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-2xl">
+            <p className="text-center text-xs text-yellow-800 font-black">
+              💡 For testing, please use Guest Account
+            </p>
+          </div>
         </div>
       </div>
 
