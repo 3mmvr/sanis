@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserSession, PetProfile, MealAnalysis } from './types';
+import { UserSession, PetProfile, MealAnalysis, PetType, BowlSize } from './types';
 import LandingPage from './components/LandingPage';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
@@ -155,12 +155,19 @@ const App: React.FC = () => {
   }, [session]);
 
   const handleAddPet = (pet: PetProfile) => {
-    setSession(prev => ({
-      ...prev,
-      pets: [...prev.pets, pet],
-      currentPetId: prev.currentPetId || pet.id,
+    // Deterministically compute and set the new session, then navigate to dashboard.
+    setOnboardingComplete(true);
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+
+    const newSession: UserSession = {
+      ...session,
+      pets: [...session.pets, pet],
+      currentPetId: session.currentPetId || pet.id,
       isGuest: false
-    }));
+    };
+
+    console.log('[App] handleAddPet - newSession:', newSession);
+    setSession(newSession);
     setView('dashboard');
   };
 
@@ -237,12 +244,18 @@ const App: React.FC = () => {
 
   const currentPet = session.pets.find(p => p.id === session.currentPetId) || null;
 
+<<<<<<< HEAD
   // Defensive: if there are pets but no currentPetId (e.g., loaded from storage), set the first pet
   React.useEffect(() => {
     if (!session.currentPetId && session.pets.length > 0) {
       setSession(prev => ({ ...prev, currentPetId: prev.pets[0].id }));
     }
   }, [session.pets, session.currentPetId]);
+=======
+  useEffect(() => {
+    console.log('[App] State update -> view:', view, 'currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
+  }, [view, session, currentPet]);
+>>>>>>> b4f817eb69b3e495d551d51cec22ccd902d2f5f9
 
   return (
     <div className="min-h-screen">
