@@ -237,6 +237,13 @@ const App: React.FC = () => {
 
   const currentPet = session.pets.find(p => p.id === session.currentPetId) || null;
 
+  // Defensive: if there are pets but no currentPetId (e.g., loaded from storage), set the first pet
+  React.useEffect(() => {
+    if (!session.currentPetId && session.pets.length > 0) {
+      setSession(prev => ({ ...prev, currentPetId: prev.pets[0].id }));
+    }
+  }, [session.pets, session.currentPetId]);
+
   return (
     <div className="min-h-screen">
       {view === 'auth' && (
