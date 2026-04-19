@@ -265,18 +265,31 @@ const App: React.FC = () => {
       {view === 'onboarding' && (
         <Onboarding onComplete={handleAddPet} onBack={() => setView(session.pets.length > 0 ? 'dashboard' : 'landing')} />
       )}
-      {view === 'dashboard' && currentPet && (
-        <Dashboard 
-          session={session} 
-          currentPet={currentPet} 
-          onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
-          onAddPet={() => setView('onboarding')}
-          onUpdateHistory={handleUpdateHistory}
-          onDeleteLog={handleDeleteLog}
-          onUpdateLog={handleUpdateLog}
-          onUpdateSession={setSession}
-          onNavigate={(v) => setView(v as any)}
-        />
+      {view === 'dashboard' && (
+        currentPet ? (
+          <Dashboard 
+            session={session} 
+            currentPet={currentPet} 
+            onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
+            onAddPet={() => setView('onboarding')}
+            onUpdateHistory={handleUpdateHistory}
+            onDeleteLog={handleDeleteLog}
+            onUpdateLog={handleUpdateLog}
+            onUpdateSession={setSession}
+            onNavigate={(v) => setView(v as any)}
+          />
+        ) : (
+          <div className="min-h-screen flex items-center justify-center p-6">
+            <div className="max-w-md bg-white rounded-2xl p-8 shadow-sm text-center">
+              <h2 className="text-xl font-black mb-2">No pet selected</h2>
+              <p className="text-sm text-slate-500 mb-4">Create a pet to launch your dashboard or select an existing pet in Settings.</p>
+              <div className="flex gap-3 justify-center">
+                <button onClick={() => setView('onboarding')} className="bg-black text-white px-5 py-3 rounded-2xl font-black">Create Pet</button>
+                <button onClick={() => setView('settings')} className="border border-black px-5 py-3 rounded-2xl font-black">Settings</button>
+              </div>
+            </div>
+          </div>
+        )
       )}
       {view === 'progress' && currentPet && (
         <ProgressView 
