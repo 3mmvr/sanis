@@ -30,7 +30,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
       <main className="px-6 py-12 max-w-6xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 text-yellow-600 px-4 py-1.5 rounded-full mb-6">
           <ICONS.Flame className="w-4 h-4" />
-          <span className="text-xs font-black uppercase tracking-widest">The #1 Pet Nutrition AI</span>
+          <span className="text-xs font-black uppercase tracking-widest">AI for Better Pet Nutrition</span>
         </div>
         
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-5 leading-[0.95]">
@@ -55,7 +55,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
                  <img key={i} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} className="w-10 h-10 rounded-full border-4 border-slate-50" />
                ))}
              </div>
-             <p className="text-sm font-bold text-slate-600">Loved by 50,000+ owners</p>
+             <p className="text-sm font-bold text-slate-600">Loved by Pet Owners Everywhere</p>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
               alt="Pet AI Dashboard Preview"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 text-left">
-               <h3 className="text-white text-2xl font-black mb-2">99.8% Vision Accuracy</h3>
+               <h3 className="text-white text-2xl font-black mb-2">High Accuracy</h3>
                <p className="text-white/80 font-bold text-sm">Simply snap a photo of their bowl to instantly log calories and macros.</p>
             </div>
           </div>
