@@ -109,7 +109,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
 
       {/* Footer */}
       <footer className="py-12 text-center text-slate-400 font-bold text-sm">
-        &copy; 2024 sanis AI. Designed for longevity.
+        &copy; 2026 sanis AI. Designed for longevity.
       </footer>
     </div>
   );
