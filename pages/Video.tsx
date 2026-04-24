@@ -15,10 +15,14 @@ const Video: React.FC = () => {
         </div>
       </nav>
       <div className="video-container" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
-        <video controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', background: '#000' }}>
-          <source src="/assets/sanis_pitch.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        <iframe 
+          src="https://drive.google.com/file/d/1UCOlo1SCenLxj4-UGp_XjIZ5krDlwBbi/preview" 
+          width="100%" 
+          height="100%" 
+          style={{ minHeight: '60vh', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', background: '#000', border: 'none' }} 
+          allow="autoplay" 
+          allowFullScreen
+        ></iframe>
       </div>
     </div>
   );
