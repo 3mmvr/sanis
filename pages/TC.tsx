@@ -117,9 +117,9 @@ const TC: React.FC = () => {
       </div>
       
       <style>{`
-        .tc-container h1 { font-family: var(--font-heading); font-size: 48px; color: var(--navy); margin-bottom: 40px; }
-        .tc-container h2 { font-family: var(--font-heading); font-size: 18px; color: var(--orange); margin: 40px 0 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .tc-container h3 { font-size: 18px; color: var(--navy); margin: 24px 0 12px; font-weight: 800; }
+        .tc-container h1 { font-family: var(--font-heading); font-size: 48px; color: var(--navy); margin-bottom: 40px; text-align: left; }
+        .tc-container h2 { font-family: var(--font-heading); font-size: 18px; color: var(--orange); margin: 40px 0 20px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+        .tc-container h3 { font-size: 18px; color: var(--navy); margin: 24px 0 12px; font-weight: 800; text-align: left; }
         .tc-container p { font-size: 15px; line-height: 1.8; color: var(--dark-gray); margin-bottom: 16px; }
         .tc-container ul { padding-left: 20px; margin-bottom: 24px; }
         .tc-container li { font-size: 15px; line-height: 1.8; color: var(--dark-gray); margin-bottom: 8px; }
