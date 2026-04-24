@@ -15,6 +15,7 @@ import TC from './pages/TC';
 import Video from './pages/Video';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import { secureStorage } from './utils/storageService';
 
 const STORAGE_KEY = 'sanis_session';
 const AUTH_KEY = 'sanis_auth';
@@ -33,31 +34,39 @@ interface AuthState {
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
-  const [authState, setAuthState] = useState<AuthState>(() => {
-    const saved = localStorage.getItem(AUTH_KEY);
-    if (saved) return JSON.parse(saved);
-    return {
-      isAuthenticated: false,
-      user: null,
-      isGuest: false
-    };
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    user: null,
+    isGuest: false
   });
 
-  const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    return localStorage.getItem(ONBOARDING_KEY) === 'true';
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  const [session, setSession] = useState<UserSession>({
+    pets: [],
+    currentPetId: null,
+    history: {},
+    waterLogs: {},
+    isGuest: true
   });
 
-  const [session, setSession] = useState<UserSession>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-    return {
-      pets: [],
-      currentPetId: null,
-      history: {},
-      waterLogs: {},
-      isGuest: true
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+
+  useEffect(() => {
+    const initStorage = async () => {
+      const savedAuth = await secureStorage.getItem<AuthState>(AUTH_KEY);
+      if (savedAuth) setAuthState(savedAuth);
+
+      const savedOnboarding = await secureStorage.getItem<string>(ONBOARDING_KEY);
+      if (savedOnboarding === 'true') setOnboardingComplete(true);
+
+      const savedSession = await secureStorage.getItem<UserSession>(STORAGE_KEY);
+      if (savedSession) setSession(savedSession);
+
+      setIsStorageLoaded(true);
     };
-  });
+    initStorage();
+  }, []);
 
   const hasInitialNav = useRef(false);
 
@@ -83,16 +92,16 @@ const AppContent: React.FC = () => {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — run once on mount only
+  }, [isStorageLoaded]); // intentionally wait for storage load
 
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    if (isStorageLoaded) secureStorage.setItem(STORAGE_KEY, session);
+  }, [session, isStorageLoaded]);
 
   useEffect(() => {
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authState));
-  }, [authState]);
+    if (isStorageLoaded) secureStorage.setItem(AUTH_KEY, authState);
+  }, [authState, isStorageLoaded]);
 
   const handleLogin = (email: string, password: string) => {
     // Mock login - in production, this would call Supabase
@@ -141,22 +150,22 @@ const AppContent: React.FC = () => {
 
     // Guests skip app onboarding and go directly to pet creation
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
     navigate(session.pets.length > 0 ? '/dashboard' : '/onboarding');
   };
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
     navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
   };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout? Guest data will be lost.')) {
-      localStorage.removeItem(AUTH_KEY);
+      secureStorage.removeItem(AUTH_KEY);
       if (authState.isGuest) {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(ONBOARDING_KEY);
+        secureStorage.removeItem(STORAGE_KEY);
+        secureStorage.removeItem(ONBOARDING_KEY);
         setSession({
           pets: [],
           currentPetId: null,
@@ -176,13 +185,13 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    if (isStorageLoaded) secureStorage.setItem(STORAGE_KEY, session);
+  }, [session, isStorageLoaded]);
 
   const handleAddPet = (pet: PetProfile) => {
     // Deterministically compute and set the new session, then navigate to dashboard.
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
 
     const newSession: UserSession = {
       ...session,

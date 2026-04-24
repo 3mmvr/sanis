@@ -32,3 +32,6 @@ front-end/
 
 # System artifacts
 *.resolved
+
+# Large files
+public/assets/sanis_pitch.mp4

@@ -125,7 +125,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
             <img src="/assets/hero_image1.png" alt="Cute dog looking up" loading="eager" />
           </div>
           <div className="hero-content">
-            <h1>Pet Nutrition Coach</h1>
+            <h1>AI Pet Nutritionist</h1>
             <p>The only app your pet needs to thrive.<br />Clinical-grade food tracking, calorie counting, and health monitoring. Extend your best friend's life with AI-driven metabolic precision.</p>
             <div className="hero-cta">
               <a href="/video" className="btn btn-orange" id="try-demo-btn" onClick={(e) => { e.preventDefault(); navigate('/video'); }}>
