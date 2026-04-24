@@ -123,6 +123,14 @@ const TC: React.FC = () => {
         .tc-container p { font-size: 15px; line-height: 1.8; color: var(--dark-gray); margin-bottom: 16px; }
         .tc-container ul { padding-left: 20px; margin-bottom: 24px; }
         .tc-container li { font-size: 15px; line-height: 1.8; color: var(--dark-gray); margin-bottom: 8px; }
+        
+        @media (max-width: 768px) {
+          .tc-container { padding: 30px !important; margin: 80px auto 40px !important; }
+          .tc-container h1 { font-size: 32px; margin-bottom: 24px; }
+          .tc-container h2 { font-size: 16px; margin: 30px 0 16px; }
+          .tc-container h3 { font-size: 16px; margin: 20px 0 10px; }
+          .tc-container p, .tc-container li { font-size: 14px; }
+        }
       `}</style>
     </div>
   );

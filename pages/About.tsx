@@ -40,6 +40,17 @@ const About: React.FC = () => {
           </div>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .about-container { padding: 30px !important; margin: 40px auto !important; }
+          .about-container h1 { font-size: 32px !important; margin-bottom: 24px !important; }
+          .about-container h2 { font-size: 22px !important; margin: 32px 0 16px !important; }
+          .about-container p { font-size: 15px !important; }
+          .vision-card h3 { font-size: 18px !important; }
+          .vision-card p { font-size: 14px !important; }
+          .vision-card { padding: 20px !important; }
+        }
+      `}</style>
     </div>
   );
 };
