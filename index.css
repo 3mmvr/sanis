@@ -436,11 +436,24 @@ button { cursor: pointer; border: none; font-family: inherit; }
   .hero-cta { justify-content: center; }
   /* Hide overlapping hero images on mobile */
   .hero-image, .hero-food { display: none; }
+  .footer { padding: 40px 0 20px; }
   .product-grid { grid-template-columns: repeat(2,1fr); }
   .report-grid { grid-template-columns: 1fr; }
   .nutrition-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+  .footer-grid { 
+    grid-template-columns: 1fr 1fr; 
+    gap: 16px; 
+    grid-template-areas: 
+      "brand brand"
+      "col1 col3"
+      "col2 col4";
+  }
+  .footer-brand { grid-area: brand; margin-bottom: 8px; }
   .footer-col { margin-bottom: 0; }
+  .footer-grid > :nth-child(2) { grid-area: col1; }
+  .footer-grid > :nth-child(3) { grid-area: col2; }
+  .footer-grid > :nth-child(4) { grid-area: col3; }
+  .footer-grid > :nth-child(5) { grid-area: col4; }
   .suggestion-cards { grid-template-columns: 1fr; }
   .section-title { font-size: 32px; }
   .about-left-new img { display: none; }
