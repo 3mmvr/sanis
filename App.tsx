@@ -183,11 +183,19 @@ const AppContent: React.FC = () => {
   };
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout? Guest data will be lost.')) {
+    const isGuest = authState.isGuest;
+    const message = isGuest 
+      ? 'Exit guest mode? Your pet profiles and history will be cleared.' 
+      : 'Are you sure you want to logout?';
+
+    if (confirm(message)) {
+      // 1. Clear Storage
       secureStorage.removeItem(AUTH_KEY);
-      if (authState.isGuest) {
+      if (isGuest) {
         secureStorage.removeItem(STORAGE_KEY);
         secureStorage.removeItem(ONBOARDING_KEY);
+        
+        // 2. Reset Session State
         setSession({
           pets: [],
           currentPetId: null,
@@ -197,12 +205,17 @@ const AppContent: React.FC = () => {
         });
         setOnboardingComplete(false);
       }
+
+      // 3. Reset Auth State
       setAuthState({
         isAuthenticated: false,
         user: null,
         isGuest: false
       });
+
+      // 4. Navigate & Reset Scroll
       navigate('/', { replace: true });
+      window.scrollTo(0, 0);
     }
   };
 
