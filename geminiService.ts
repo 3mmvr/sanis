@@ -48,7 +48,7 @@ export class GeminiService {
       `;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.1-flash-lite-preview',
         contents: {
           parts: [
             { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
@@ -206,7 +206,7 @@ export class GeminiService {
     `;
 
     const response = await this.ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite',
+      model: 'gemini-3.1-flash-lite-preview',
       contents: {
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
@@ -247,7 +247,7 @@ export class GeminiService {
   async generateSpeech(text: string): Promise<Uint8Array | null> {
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-3.1-flash-lite-tts",
+        model: "gemini-3.1-flash-lite-preview-tts",
         contents: [{ parts: [{ text: `Clinical nutrition report: ${text}` }] }],
         config: {
           responseModalities: [Modality.AUDIO],
