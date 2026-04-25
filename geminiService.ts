@@ -116,7 +116,14 @@ export class GeminiService {
       - Life Stage Calorie Needs: ~${dailyCalorieNeed} cal/day (maintenance)
       - Bowl Size Reference: ${pet.bowlSize} bowl
       - Daily Water Target: ${pet.dailyWaterTarget} cups/day
+      - Known Allergies: ${pet.allergies || "None reported"}
       - Active Health Goals: ${pet.healthGoals.length > 0 ? pet.healthGoals.join(", ") : "General health maintenance"}
+      
+      IMPORTANT SAFETY CHECK:
+      If ${pet.name} has allergies listed above (e.g., "${pet.allergies}"), you MUST:
+      1. Explicitly check every identified ingredient against these allergies.
+      2. If an allergen is detected, flag it in the "insights" as a CRITICAL WARNING.
+      3. Recommend against the meal in the "advice" section.
       
       BREED-SPECIFIC CONSIDERATIONS FOR ${pet.breed}:
       - Consider known breed sensitivities (e.g., large breeds need joint support, small breeds need smaller portions)

@@ -22,6 +22,7 @@ export interface PetProfile {
   dailyWaterTarget?: number; // recommended cups per day
   dailyCalorieTarget?: number; // recommended calories per day
   avatar?: string;
+  allergies?: string;
 }
 
 export interface WaterLog {

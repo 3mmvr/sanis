@@ -63,10 +63,21 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
     setShowScanner(false);
   };
 
-  const days = [
-    { d: 'S', n: 27 }, { d: 'M', n: 28 }, { d: 'T', n: 29 }, 
-    { d: 'W', n: 30 }, { d: 'T', n: 1 }, { d: 'F', n: 2, active: true }, { d: 'S', n: 3 }
-  ];
+  // Generate dynamic date strip centered on today
+  const days = useMemo(() => {
+    const now = new Date();
+    const result = [];
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date();
+      d.setDate(now.getDate() + i);
+      result.push({
+        d: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()],
+        n: d.getDate(),
+        active: i === 0
+      });
+    }
+    return result;
+  }, []);
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-36 relative overflow-x-hidden">

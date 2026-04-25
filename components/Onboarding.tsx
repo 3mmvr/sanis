@@ -81,10 +81,20 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                   <input 
                     type="text"
                     value={pet.name || ''}
-                    onChange={(e) => setPet({ ...pet, name: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Allow letters from any language (Unicode), spaces, and hyphens
+                      // But reject numbers and special characters
+                      if (val === '' || /^[\p{L}\s-]+$/u.test(val)) {
+                        setPet({ ...pet, name: val });
+                      }
+                    }}
                     className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all"
                     placeholder={pet.type === PetType.DOG ? "e.g. Buddy" : "e.g. Luna"}
                   />
+                  {pet.name && !/^[\p{L}\s-]+$/u.test(pet.name) && (
+                    <p className="text-red-500 text-[10px] mt-2 font-black uppercase tracking-wider">Please use only characters (English, Chinese, Japanese, etc.)</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Breed</label>
@@ -173,6 +183,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                   {pet.age !== undefined && (pet.age < 0 || pet.age > 50) && (
                     <p className="text-red-500 text-xs mt-2 font-bold">Age must be between 0 and 50 years</p>
                   )}
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Allergies (Optional)</label>
+                  <input 
+                    type="text"
+                    value={pet.allergies || ''}
+                    onChange={(e) => setPet({ ...pet, allergies: e.target.value })}
+                    className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-red-400 outline-none transition-all"
+                    placeholder="e.g. Chicken, Grain, Beef"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-2 font-bold italic">💡 This info will be used by AI to flag unsafe ingredients.</p>
                 </div>
               </div>
               <button 
