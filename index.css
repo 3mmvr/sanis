@@ -584,8 +584,14 @@ button { cursor: pointer; border: none; font-family: inherit; }
   .section-title { font-size: 32px; }
   .about-left-new img { display: none; }
   
+  /* SECTION SPACING REDUCTION (MOBILE) */
+  .features-section { padding: 40px 0 !important; }
+  .analysis-section { padding: 40px 0 !important; }
+  .report-section { padding: 40px 0 !important; }
+  .about-section-new { padding: 40px 0 !important; }
+  
   /* HIGHER PRIORITY OVERRIDES */
-  .about-heading-stack h2 { font-size: 36px !important; }
+  .about-heading-stack h2 { font-size: 50px !important; }
   .smart-doctor { height: 60%; opacity: 0.5; right: -20px; }
   .smart-card-main-content { max-width: 100% !important; }
   

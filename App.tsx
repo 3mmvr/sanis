@@ -16,6 +16,7 @@ import Video from './pages/Video';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import { secureStorage } from './utils/storageService';
+import { supabase, validateConnection } from './utils/supabase';
 
 const STORAGE_KEY = 'sanis_session';
 const AUTH_KEY = 'sanis_auth';
@@ -74,6 +75,11 @@ const AppContent: React.FC = () => {
     initStorage();
   }, []);
 
+  // Validate DB connection on load
+  useEffect(() => {
+    validateConnection();
+  }, []);
+
   const hasInitialNav = useRef(false);
 
   // Initial navigation — runs ONCE on mount only.
@@ -125,42 +131,75 @@ const AppContent: React.FC = () => {
     if (isStorageLoaded) secureStorage.setItem(AUTH_KEY, authState);
   }, [authState, isStorageLoaded]);
 
-  const handleLogin = (email: string, password: string) => {
-    // Mock login - in production, this would call Supabase
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      fullName: email.split('@')[0]
-    };
-    
-    setAuthState({
-      isAuthenticated: true,
-      user,
-      isGuest: false
-    });
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (!onboardingComplete) {
-      navigate('/app-onboarding', { replace: true });
-    } else {
-      navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
+      if (error) throw error;
+
+      if (data.user) {
+        const user = {
+          id: data.user.id,
+          email: data.user.email || '',
+          fullName: data.user.user_metadata?.full_name || email.split('@')[0]
+        };
+
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          isGuest: false
+        });
+
+        if (!onboardingComplete) {
+          navigate('/app-onboarding', { replace: true });
+        } else {
+          navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
+        }
+      }
+    } catch (err: any) {
+      alert(err.message || 'Login failed');
     }
   };
 
-  const handleSignup = (email: string, password: string, fullName: string) => {
-    // Mock signup - in production, this would call Supabase
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      fullName
-    };
-    
-    setAuthState({
-      isAuthenticated: true,
-      user,
-      isGuest: false
-    });
+  const handleSignup = async (email: string, password: string, fullName: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
+      });
 
-    navigate('/app-onboarding', { replace: true });
+      if (error) throw error;
+
+      if (data.user) {
+        alert('Signup successful! Please check your email for verification.');
+        // For testing, we can auto-login if email confirmation is off
+        handleLogin(email, password);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Signup failed');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      alert(err.message || 'Google login failed');
+    }
   };
 
   const handleGuestContinue = () => {
@@ -319,6 +358,7 @@ const AppContent: React.FC = () => {
         <Route path="/login" element={
           <Login
             onLogin={handleLogin}
+            onGoogleLogin={handleGoogleLogin}
             onSignupClick={() => navigate('/signup')}
             onGuestContinue={handleGuestContinue}
           />
@@ -326,6 +366,7 @@ const AppContent: React.FC = () => {
         <Route path="/signup" element={
           <SignUp
             onSignup={handleSignup}
+            onGoogleLogin={handleGoogleLogin}
             onLoginClick={() => navigate('/login')}
             onGuestContinue={handleGuestContinue}
           />

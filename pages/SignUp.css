@@ -190,6 +190,27 @@
   border-color: #CBD5E1;
 }
 
+.btn-auth-google {
+  width: 100%;
+  background-color: #FFFFFF;
+  color: #000000;
+  padding: 18px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-auth-google:hover {
+  background-color: #F8FAFC;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
 .auth-note {
   font-size: 12px;
   color: #94A3B8;

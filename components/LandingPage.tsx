@@ -213,7 +213,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
       </section>
 
       {/* ===== NUTRI REPORT DASHBOARD ===== */}
-      <section className="report-section" id="report" style={{ background: 'var(--cream)', padding: '60px 0' }}>
+      <section className="report-section" id="report" style={{ background: 'var(--cream)' }}>
         <div className="container">
           <div className="dashboard-wrapper">
             {/* Header */}
