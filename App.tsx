@@ -42,7 +42,8 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const apiKey = (import.meta.env.VITE_API_KEY || '').replace(/['"]/g, '').trim();
-    console.log('[Auth] API Configuration:', apiKey ? `Loaded (Length: ${apiKey.length})` : 'Missing (✗)');
+    const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'N/A';
+    console.log(`[Auth] API Key: ${maskedKey} | Length: ${apiKey.length}`);
   }, []);
 
   const [onboardingComplete, setOnboardingComplete] = useState(false);
