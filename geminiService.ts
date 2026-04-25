@@ -7,10 +7,13 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    // In Vite, import.meta.env.VITE_API_KEY is the standard way to access variables.
-    // We've configured vite.config.ts to ensure this is populated from GEMINI_API_KEY if needed.
-    const apiKey = import.meta.env.VITE_API_KEY;
-    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
+    // Standard Vite environment variable access
+    let apiKey = import.meta.env.VITE_API_KEY || '';
+    
+    // Cleanup: Remove any accidental quotes or whitespace that might come from .env files
+    apiKey = apiKey.replace(/['"]/g, '').trim();
+    
+    this.ai = new GoogleGenAI({ apiKey });
   }
 
   async validateImage(imageB64: string): Promise<{ isValid: boolean; reason?: string }> {
