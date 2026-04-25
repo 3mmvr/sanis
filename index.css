@@ -164,16 +164,6 @@ button { cursor: pointer; border: none; font-family: inherit; }
   width: 380px; z-index: 1;
   animation: float 4s ease-in-out infinite;
 }
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* UTILS */
-.hidden { display: none !important; }
-@media (min-width: 768px) {
-  .md\:block { display: block !important; }
-  .md\:flex { display: flex !important; }
-}
 .hero-food img { border-radius: 20px; }
 .hero-bg-shape {
   position: absolute; top: 100px; right: 0;
