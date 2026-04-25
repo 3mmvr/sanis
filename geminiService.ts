@@ -7,7 +7,9 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+    // Priority: VITE_API_KEY (from .env) -> GEMINI_API_KEY (from Netlify/Vite define)
+    const apiKey = import.meta.env.VITE_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+    this.ai = new GoogleGenAI({ apiKey });
   }
 
   async validateImage(imageB64: string): Promise<{ isValid: boolean; reason?: string }> {
@@ -42,7 +44,7 @@ export class GeminiService {
       `;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.1-flash',
         contents: {
           parts: [
             { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
@@ -200,7 +202,7 @@ export class GeminiService {
     `;
 
     const response = await this.ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3.1-flash',
       contents: {
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
@@ -241,7 +243,7 @@ export class GeminiService {
   async generateSpeech(text: string): Promise<Uint8Array | null> {
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
+        model: "gemini-3.1-flash-tts",
         contents: [{ parts: [{ text: `Clinical nutrition report: ${text}` }] }],
         config: {
           responseModalities: [Modality.AUDIO],

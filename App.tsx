@@ -184,10 +184,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (isStorageLoaded) secureStorage.setItem(STORAGE_KEY, session);
-  }, [session, isStorageLoaded]);
-
   const handleAddPet = (pet: PetProfile) => {
     // Deterministically compute and set the new session, then navigate to dashboard.
     setOnboardingComplete(true);
