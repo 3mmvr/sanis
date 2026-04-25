@@ -376,7 +376,7 @@ const AppContent: React.FC = () => {
         } />
         <Route path="/landing" element={
           <LandingPage 
-            onGetStarted={() => navigate('/login')} 
+            onGetStarted={() => navigate('/signup')} 
             onSignIn={() => navigate('/login')}
           />
         } />
@@ -395,7 +395,7 @@ const AppContent: React.FC = () => {
             onUpdateSession={setSession}
             onNavigate={(path) => navigate(path)}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/progress" element={currentPet ? (
           <ProgressView 
             session={session}
@@ -403,7 +403,7 @@ const AppContent: React.FC = () => {
             onBack={() => navigate('/dashboard')}
             onNavigate={(path) => navigate(path)}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/settings" element={
           <SettingsView 
             session={session}
@@ -426,7 +426,7 @@ const AppContent: React.FC = () => {
             onDeleteLog={handleDeleteLog}
             onUpdateLog={handleUpdateLog}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/about" element={<About />} />
         <Route path="/tc" element={<TC />} />
         <Route path="/video" element={<Video />} />
@@ -434,8 +434,8 @@ const AppContent: React.FC = () => {
         {/* Default route - redirect to landing based on auth state */}
         <Route path="*" element={
           authState.isAuthenticated || authState.isGuest
-            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />) : <AppOnboarding onComplete={handleOnboardingComplete} />)
-            : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />
+            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />) : <AppOnboarding onComplete={handleOnboardingComplete} />)
+            : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />
         } />
       </Routes>
     </div>
