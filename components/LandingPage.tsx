@@ -182,7 +182,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
                   <p>I see you're using Chicken Kibble.<br />Since your Bulldog has had skin rashes before, chicken might be a trigger.</p>
                   <p style={{ marginTop: '20px' }}>Just add one tablespoon of Coconut Oil or half a tin of Sardines to this bowl. The Omega-3 will help soothe his skin immediately!</p>
                 </div>
-                <img src="/assets/doc_dog.png" alt="Doctor Dog" className="smart-doctor" />
+                <img src="/assets/doc_dog.png" alt="Doctor Dog" className="smart-doctor hidden md:block" />
               </div>
               <div className="smart-card-small-grid">
                 <div className="smart-card-small">

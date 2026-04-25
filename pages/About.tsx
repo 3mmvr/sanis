@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const About: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div style={{ background: 'var(--cream)', color: 'var(--navy)', minHeight: '100vh' }}>
       <nav className="navbar" style={{ background: 'white', position: 'relative', borderBottom: '1px solid #eee' }}>
@@ -10,14 +12,14 @@ const About: React.FC = () => {
             <span className="logo-text" style={{ transform: 'translateY(8px)' }}>SANIS</span>
           </a>
           <div className="nav-links" style={{ display: 'flex' }}>
-            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }}>Home</a>
+            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Home</a>
           </div>
         </div>
       </nav>
 
       <div className="container">
         <div className="about-container" style={{ maxWidth: '900px', margin: '60px auto', padding: '60px', background: 'white', borderRadius: '30px', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '48px', marginBottom: '40px', color: 'var(--navy)' }}>About Us</h1>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '36px', marginBottom: '40px', color: 'var(--navy)' }}>About Us</h1>
           
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', color: 'var(--orange)', margin: '48px 0 20px' }}>1. Our Mission</h2>
           <p style={{ fontSize: '17px', lineHeight: '1.8', color: 'var(--dark-gray)', marginBottom: '24px', textAlign: 'justify' }}>In a world where pet technology often waits for symptoms to manifest, Sanis acts sooner. Most devices track changes after a pet is already in discomfort, but our mission is to identify imbalances in the "invisible window" before they are physically observable.</p>

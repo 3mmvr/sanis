@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Video: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div style={{ background: 'var(--cream)', color: 'var(--navy)', display: 'flex', flexDirection: 'column', height: '100vh', margin: 0, padding: 0, fontFamily: "'DM Sans', sans-serif" }}>
       <nav className="navbar" style={{ background: 'white', position: 'relative', borderBottom: '1px solid #eee' }}>
@@ -10,7 +12,7 @@ const Video: React.FC = () => {
             <span className="logo-text" style={{ transform: 'translateY(8px)', color: 'var(--orange)' }}>SANIS</span>
           </a>
           <div className="nav-links" style={{ display: 'flex' }}>
-            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }}>Home</a>
+            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Home</a>
           </div>
         </div>
       </nav>
