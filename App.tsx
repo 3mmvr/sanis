@@ -46,21 +46,6 @@ const AppContent: React.FC = () => {
     console.log(`[Auth] API Key: ${maskedKey} | Length: ${apiKey.length}`);
   }, []);
 
-  // Navigation Guard: Prevent authenticated users from going back to Login/SignUp/Onboarding
-  useEffect(() => {
-    if (authState.isAuthenticated || authState.isGuest) {
-      const authRoutes = ['/login', '/signup'];
-      const onboardingRoutes = ['/app-onboarding', '/onboarding'];
-      
-      if (authRoutes.includes(location.pathname)) {
-        navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
-      } else if (onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
-        // If they already have pets, they shouldn't be in onboarding
-        navigate('/dashboard', { replace: true });
-      }
-    }
-  }, [location.pathname, authState.isAuthenticated, authState.isGuest, session.pets.length, navigate]);
-
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const [session, setSession] = useState<UserSession>({
@@ -94,6 +79,22 @@ const AppContent: React.FC = () => {
   // Initial navigation — runs ONCE on mount only.
   // Do NOT re-run on every state change; that overrides user-initiated navigation.
   const location = useLocation();
+
+  // Navigation Guard: Prevent authenticated users from going back to Login/SignUp/Onboarding
+  useEffect(() => {
+    if (authState.isAuthenticated || authState.isGuest) {
+      const authRoutes = ['/login', '/signup'];
+      const onboardingRoutes = ['/app-onboarding', '/onboarding'];
+      
+      if (authRoutes.includes(location.pathname)) {
+        navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
+      } else if (onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
+        // If they already have pets, they shouldn't be in onboarding
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [location.pathname, authState.isAuthenticated, authState.isGuest, session.pets.length, navigate]);
+
   useEffect(() => {
     if (hasInitialNav.current) return; // already navigated once
     // Public routes that should never be auto-redirected
