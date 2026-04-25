@@ -16,9 +16,10 @@ interface DashboardProps {
   onUpdateLog: (petId: string, updatedLog: MealAnalysis) => void;
   onUpdateSession: (session: UserSession) => void;
   onNavigate: (view: string) => void;
+  userName?: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect, onAddPet, onUpdateHistory, onDeleteLog, onUpdateLog, onUpdateSession, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect, onAddPet, onUpdateHistory, onDeleteLog, onUpdateLog, onUpdateSession, onNavigate, userName }) => {
   const [showScanner, setShowScanner] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<MealAnalysis | null>(null);
   
@@ -72,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
       {/* Refined Header */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-center bg-[#F8F8F8]/90 backdrop-blur-xl sticky top-0 z-30">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-black text-black tracking-tightest">sanis</h1>
+          <h1 className="text-lg font-black text-black tracking-tightest lowercase">{userName || 'sanis'}</h1>
           <div className="flex -space-x-1.5 items-center">
             {session.pets.map(pet => (
               <button 

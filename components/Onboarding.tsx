@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { PetType, BowlSize, PetProfile, HEALTH_GOALS } from '../types';
 import { ICONS } from '../constants';
 import { calculateWaterRecommendation, getWaterRecommendationExplanation } from '../utils/waterCalculator';
+import { DOG_BREEDS, CAT_BREEDS } from '../constants/breeds';
 
 interface OnboardingProps {
   onComplete: (pet: PetProfile) => void;
@@ -14,8 +15,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
   const [pet, setPet] = useState<Partial<PetProfile>>({
     type: PetType.DOG,
     healthGoals: [],
-    bowlSize: BowlSize.MEDIUM
+    bowlSize: BowlSize.MEDIUM,
+    breed: ''
   });
+  const [isOtherBreed, setIsOtherBreed] = useState(false);
   const [customWaterTarget, setCustomWaterTarget] = useState<number | null>(null);
 
   const handleNext = () => setStep(s => s + 1);
@@ -85,13 +88,43 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Breed</label>
-                  <input 
-                    type="text"
-                    value={pet.breed || ''}
-                    onChange={(e) => setPet({ ...pet, breed: e.target.value })}
-                    className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all"
-                    placeholder={pet.type === PetType.DOG ? "e.g. Golden Retriever" : "e.g. Siamese"}
-                  />
+                  {!isOtherBreed ? (
+                    <select 
+                      value={pet.breed || ''}
+                      onChange={(e) => {
+                        if (e.target.value === 'Other') {
+                          setIsOtherBreed(true);
+                          setPet({ ...pet, breed: '' });
+                        } else {
+                          setPet({ ...pet, breed: e.target.value });
+                        }
+                      }}
+                      className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled>Select Breed</option>
+                      {(pet.type === PetType.DOG ? DOG_BREEDS : CAT_BREEDS).map(breed => (
+                        <option key={breed} value={breed}>{breed}</option>
+                      ))}
+                      <option value="Other">Others (Manual Input)</option>
+                    </select>
+                  ) : (
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        value={pet.breed || ''}
+                        onChange={(e) => setPet({ ...pet, breed: e.target.value })}
+                        className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-[#FACC15] outline-none transition-all"
+                        placeholder="Type breed name..."
+                        autoFocus
+                      />
+                      <button 
+                        onClick={() => { setIsOtherBreed(false); setPet({ ...pet, breed: '' }); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase hover:text-black"
+                      >
+                        Back to List
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Weight (kg)</label>
