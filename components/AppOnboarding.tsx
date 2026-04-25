@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { ICONS } from '../constants';
 
 interface AppOnboardingProps {
+  userName?: string;
   onComplete: () => void;
 }
 
-const AppOnboarding: React.FC<AppOnboardingProps> = ({ onComplete }) => {
+const AppOnboarding: React.FC<AppOnboardingProps> = ({ onComplete, userName }) => {
   const [currentStage, setCurrentStage] = useState(1);
 
   const handleNext = () => {
@@ -22,7 +23,7 @@ const AppOnboarding: React.FC<AppOnboardingProps> = ({ onComplete }) => {
 
   const stages = [
     {
-      title: "Welcome to Sanis",
+      title: userName ? `Welcome, ${userName}` : "Welcome to Sanis",
       subtitle: "Where your pet's health becomes your mission",
       icon: "🎯",
       description: "Track nutrition with AI precision. Just like you count your calories, now count theirs.",
