@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'import.meta.env.VITE_API_KEY': JSON.stringify((env.VITE_API_KEY || env.GEMINI_API_KEY || '').replace(/['"]/g, '')),
+        'import.meta.env.VITE_API_KEY': JSON.stringify((env.VITE_API_KEY || env.GEMINI_API_KEY || '').replace(/[$'"\s]/g, '')),
       },
       resolve: {
         alias: {

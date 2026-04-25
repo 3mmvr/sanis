@@ -41,7 +41,7 @@ const AppContent: React.FC = () => {
   });
 
   useEffect(() => {
-    const apiKey = (import.meta.env.VITE_API_KEY || '').replace(/['"]/g, '').trim();
+    const apiKey = (import.meta.env.VITE_API_KEY || '').replace(/[$'"\s]/g, '').trim();
     const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'N/A';
     console.log(`[Auth] API Key: ${maskedKey} | Length: ${apiKey.length}`);
   }, []);

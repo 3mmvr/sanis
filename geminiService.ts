@@ -10,8 +10,8 @@ export class GeminiService {
     // Standard Vite environment variable access
     let apiKey = import.meta.env.VITE_API_KEY || '';
     
-    // Cleanup: Remove any accidental quotes or whitespace that might come from .env files
-    apiKey = apiKey.replace(/['"]/g, '').trim();
+    // Cleanup: Remove any accidental symbols ($), quotes, or whitespace
+    apiKey = apiKey.replace(/[$'"\s]/g, '').trim();
     
     this.ai = new GoogleGenAI({ apiKey });
   }
