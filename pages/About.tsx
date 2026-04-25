@@ -40,6 +40,8 @@ const About: React.FC = () => {
             <h3 style={{ fontSize: '20px', marginBottom: '12px', color: 'var(--navy)' }}>Global Health Ecosystems</h3>
             <p style={{ margin: 0, fontSize: '15px' }}>Establishing partnerships with veterinarians and clinics to enable shared health records and proactive care.</p>
           </div>
+          
+          <a href="/" className="back-home" style={{ display: 'inline-block', marginTop: '40px', fontWeight: 700, color: 'var(--teal)', textDecoration: 'underline' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Back to Homepage</a>
         </div>
       </div>
       <style>{`

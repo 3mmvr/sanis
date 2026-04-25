@@ -82,16 +82,16 @@ const AppContent: React.FC = () => {
 
   // Navigation Guard: Prevent authenticated users from going back to Login/SignUp/Onboarding
   useEffect(() => {
-    if (authState.isAuthenticated || authState.isGuest) {
-      const authRoutes = ['/login', '/signup'];
-      const onboardingRoutes = ['/app-onboarding', '/onboarding'];
-      
-      if (authRoutes.includes(location.pathname)) {
-        navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
-      } else if (onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
-        // If they already have pets, they shouldn't be in onboarding
-        navigate('/dashboard', { replace: true });
-      }
+    const isAuthenticated = authState.isAuthenticated && !authState.isGuest;
+    const authRoutes = ['/login', '/signup'];
+    const onboardingRoutes = ['/app-onboarding', '/onboarding'];
+    
+    if (isAuthenticated && authRoutes.includes(location.pathname)) {
+      // ONLY redirect away from Login/SignUp if they are truly authenticated (not guest)
+      navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
+    } else if ((authState.isAuthenticated || authState.isGuest) && onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
+      // Both guests and real users should skip onboarding if they already have pets
+      navigate('/dashboard', { replace: true });
     }
   }, [location.pathname, authState.isAuthenticated, authState.isGuest, session.pets.length, navigate]);
 
@@ -376,7 +376,7 @@ const AppContent: React.FC = () => {
         <Route path="/about" element={<About />} />
         <Route path="/tc" element={<TC />} />
         <Route path="/video" element={<Video />} />
-        <Route path="/" element={<LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/" element={<LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         {/* Default route - redirect to landing based on auth state */}
         <Route path="*" element={
           authState.isAuthenticated || authState.isGuest

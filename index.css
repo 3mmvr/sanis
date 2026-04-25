@@ -457,7 +457,9 @@ button { cursor: pointer; border: none; font-family: inherit; }
   .suggestion-cards { grid-template-columns: 1fr; }
   .section-title { font-size: 32px; }
   .about-left-new img { display: none; }
+  .about-heading-stack h2 { font-size: 36px; }
   .smart-doctor { height: 60%; opacity: 0.5; right: -20px; }
+  .smart-card-main-content { max-width: 100%; }
   .dashboard-wrapper { overflow-x: hidden; padding: 16px; }
   .dashboard-grid { width: 100%; overflow-x: hidden; }
   .dash-box { max-width: 100%; overflow: hidden; }
