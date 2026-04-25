@@ -7,9 +7,10 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    // Priority: VITE_API_KEY (from .env) -> GEMINI_API_KEY (from Netlify/Vite define)
-    const apiKey = import.meta.env.VITE_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
-    this.ai = new GoogleGenAI({ apiKey });
+    // In Vite, import.meta.env.VITE_API_KEY is the standard way to access variables.
+    // We've configured vite.config.ts to ensure this is populated from GEMINI_API_KEY if needed.
+    const apiKey = import.meta.env.VITE_API_KEY;
+    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
   }
 
   async validateImage(imageB64: string): Promise<{ isValid: boolean; reason?: string }> {
