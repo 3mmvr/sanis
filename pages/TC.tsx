@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const TC: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div style={{ background: 'var(--cream)', color: 'var(--navy)', minHeight: '100vh' }}>
       <nav className="navbar" style={{ background: 'white', position: 'relative', borderBottom: '1px solid #eee' }}>
@@ -10,7 +12,7 @@ const TC: React.FC = () => {
             <span className="logo-text" style={{ transform: 'translateY(8px)' }}>SANIS</span>
           </a>
           <div className="nav-links" style={{ display: 'flex' }}>
-            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }}>Home</a>
+            <a href="/" style={{ color: 'var(--navy)', textDecoration: 'none', fontWeight: 700 }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Home</a>
           </div>
         </div>
       </nav>
@@ -111,7 +113,7 @@ const TC: React.FC = () => {
             <h2>13. GENERAL INFORMATION</h2>
             <p>These Legal Terms constitute the complete and exclusive agreement between you and SanisTech HK Limited. These Terms shall be governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region.</p>
 
-            <a href="/" className="back-home" style={{ display: 'inline-block', marginTop: '40px', fontWeight: 700, color: 'var(--teal)', textDecoration: 'underline' }}>Back to Homepage</a>
+            <a href="/" className="back-home" style={{ display: 'inline-block', marginTop: '40px', fontWeight: 700, color: 'var(--teal)', textDecoration: 'underline' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Back to Homepage</a>
           </div>
         </div>
       </div>

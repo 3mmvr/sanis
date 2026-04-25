@@ -46,6 +46,21 @@ const AppContent: React.FC = () => {
     console.log(`[Auth] API Key: ${maskedKey} | Length: ${apiKey.length}`);
   }, []);
 
+  // Navigation Guard: Prevent authenticated users from going back to Login/SignUp/Onboarding
+  useEffect(() => {
+    if (authState.isAuthenticated || authState.isGuest) {
+      const authRoutes = ['/login', '/signup'];
+      const onboardingRoutes = ['/app-onboarding', '/onboarding'];
+      
+      if (authRoutes.includes(location.pathname)) {
+        navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
+      } else if (onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
+        // If they already have pets, they shouldn't be in onboarding
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [location.pathname, authState.isAuthenticated, authState.isGuest, session.pets.length, navigate]);
+
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const [session, setSession] = useState<UserSession>({
@@ -124,9 +139,9 @@ const AppContent: React.FC = () => {
     });
 
     if (!onboardingComplete) {
-      navigate('/app-onboarding');
+      navigate('/app-onboarding', { replace: true });
     } else {
-      navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
+      navigate(session.pets.length > 0 ? '/dashboard' : '/landing', { replace: true });
     }
   };
 
@@ -144,7 +159,7 @@ const AppContent: React.FC = () => {
       isGuest: false
     });
 
-    navigate('/app-onboarding');
+    navigate('/app-onboarding', { replace: true });
   };
 
   const handleGuestContinue = () => {
@@ -157,7 +172,7 @@ const AppContent: React.FC = () => {
     // Guests skip app onboarding and go directly to pet creation
     setOnboardingComplete(true);
     secureStorage.setItem(ONBOARDING_KEY, 'true');
-    navigate(session.pets.length > 0 ? '/dashboard' : '/onboarding');
+    navigate(session.pets.length > 0 ? '/dashboard' : '/onboarding', { replace: true });
   };
 
   const handleOnboardingComplete = () => {
@@ -186,7 +201,7 @@ const AppContent: React.FC = () => {
         user: null,
         isGuest: false
       });
-      navigate('/login');
+      navigate('/', { replace: true });
     }
   };
 
