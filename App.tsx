@@ -94,7 +94,7 @@ const AppContent: React.FC = () => {
     
     if (isAuthenticated && authRoutes.includes(location.pathname)) {
       // ONLY redirect away from Login/SignUp if they are truly authenticated (not guest)
-      navigate(session.pets.length > 0 ? '/dashboard' : '/app-onboarding', { replace: true });
+      navigate(session.pets.length > 0 ? '/dashboard' : '/onboarding', { replace: true });
     } else if ((authState.isAuthenticated || authState.isGuest) && onboardingRoutes.includes(location.pathname) && session.pets.length > 0) {
       // Both guests and real users should skip onboarding if they already have pets
       navigate('/dashboard', { replace: true });
@@ -153,11 +153,11 @@ const AppContent: React.FC = () => {
           isGuest: false
         });
 
-        // For a new login, we should typically check if they've completed onboarding 
-        // in the database. For now, we'll force onboarding if they have no pets.
+        // Authenticated users without pets should skip app onboarding 
+        // and go directly to pet creation, just like guests.
         if (session.pets.length === 0) {
-          setOnboardingComplete(false);
-          navigate('/app-onboarding', { replace: true });
+          setOnboardingComplete(true);
+          navigate('/onboarding', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });
         }
@@ -440,7 +440,7 @@ const AppContent: React.FC = () => {
         {/* Default route - redirect to landing based on auth state */}
         <Route path="*" element={
           authState.isAuthenticated || authState.isGuest
-            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />) : <AppOnboarding userName={authState.user?.fullName} onComplete={handleOnboardingComplete} />)
+            ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : (onboardingComplete ? <Onboarding onComplete={handleAddPet} onBack={() => navigate('/landing')} /> : <AppOnboarding userName={authState.user?.fullName} onComplete={handleOnboardingComplete} />))
             : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />
         } />
       </Routes>
