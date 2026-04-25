@@ -40,6 +40,11 @@ const AppContent: React.FC = () => {
     isGuest: false
   });
 
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_API_KEY;
+    console.log('[Auth] API Configuration:', apiKey ? 'Loaded (✓)' : 'Missing (✗)');
+  }, []);
+
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const [session, setSession] = useState<UserSession>({
