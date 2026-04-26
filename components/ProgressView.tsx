@@ -17,16 +17,14 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
   const history = session.history[currentPet.id] || [];
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('week');
   
-  // Calculate real streak and weekly stats
   const streakData = useMemo(() => calculateStreak(history), [history]);
   const weeklyStats = useMemo(() => calculateWeeklyStats(history), [history]);
 
-  // Calculate data points based on selected time filter
   const dataPoints = useMemo(() => {
     if (history.length === 0) return [0];
     
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    today.setHours(23, 59, 59, 999);
     
     let daysToShow: number;
     let groupByDays: number;
@@ -34,26 +32,25 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
     switch (timeFilter) {
       case 'week':
         daysToShow = 7;
-        groupByDays = 1; // Daily data
+        groupByDays = 1;
         break;
       case 'month':
         daysToShow = 30;
-        groupByDays = 1; // Daily data
+        groupByDays = 1;
         break;
       case '6months':
         daysToShow = 180;
-        groupByDays = 7; // Weekly averages
+        groupByDays = 7;
         break;
       case '12months':
         daysToShow = 365;
-        groupByDays = 30; // Monthly averages
+        groupByDays = 30;
         break;
     }
     
     const dataArray: number[] = [];
     const periods = Math.ceil(daysToShow / groupByDays);
     
-    // Calculate from oldest to newest
     for (let i = 0; i < periods; i++) {
       const periodEnd = new Date(today);
       periodEnd.setDate(periodEnd.getDate() - (i * groupByDays));
@@ -69,9 +66,8 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
         })
         .reduce((sum, meal) => sum + meal.calories, 0);
       
-      // For multi-day periods, calculate average per day
       const avgCalories = groupByDays > 1 ? periodTotal / groupByDays : periodTotal;
-      dataArray.unshift(avgCalories); // Add to beginning to maintain chronological order
+      dataArray.unshift(avgCalories);
     }
     
     return dataArray.length > 0 ? dataArray : [0];

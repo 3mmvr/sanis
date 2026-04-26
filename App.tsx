@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { UserSession, PetProfile, MealAnalysis, PetType, BowlSize } from './types';
 import LandingPage from './components/LandingPage';
 import Onboarding from './components/Onboarding';
@@ -7,8 +8,14 @@ import Dashboard from './components/Dashboard';
 import ProgressView from './components/ProgressView';
 import SettingsView from './components/SettingsView';
 import LogsView from './components/LogsView';
-import AuthPage from './components/AuthPage';
 import AppOnboarding from './components/AppOnboarding';
+// New page imports
+import About from './pages/About';
+import TC from './pages/TC';
+import Video from './pages/Video';
+import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import { secureStorage } from './utils/storageService';
 
 const STORAGE_KEY = 'sanis_session';
 const AUTH_KEY = 'sanis_auth';
@@ -24,51 +31,77 @@ interface AuthState {
   isGuest: boolean;
 }
 
-const App: React.FC = () => {
-  const [authState, setAuthState] = useState<AuthState>(() => {
-    const saved = localStorage.getItem(AUTH_KEY);
-    if (saved) return JSON.parse(saved);
-    return {
-      isAuthenticated: false,
-      user: null,
-      isGuest: false
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    user: null,
+    isGuest: false
+  });
+
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  const [session, setSession] = useState<UserSession>({
+    pets: [],
+    currentPetId: null,
+    history: {},
+    waterLogs: {},
+    isGuest: true
+  });
+
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+
+  useEffect(() => {
+    const initStorage = async () => {
+      const savedAuth = await secureStorage.getItem<AuthState>(AUTH_KEY);
+      if (savedAuth) setAuthState(savedAuth);
+
+      const savedOnboarding = await secureStorage.getItem<string>(ONBOARDING_KEY);
+      if (savedOnboarding === 'true') setOnboardingComplete(true);
+
+      const savedSession = await secureStorage.getItem<UserSession>(STORAGE_KEY);
+      if (savedSession) setSession(savedSession);
+
+      setIsStorageLoaded(true);
     };
-  });
+    initStorage();
+  }, []);
 
-  const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    return localStorage.getItem(ONBOARDING_KEY) === 'true';
-  });
+  const hasInitialNav = useRef(false);
 
-  const [session, setSession] = useState<UserSession>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-    return {
-      pets: [],
-      currentPetId: null,
-      history: {},
-      waterLogs: {},
-      isGuest: true
-    };
-  });
-
-  const [view, setView] = useState<'auth' | 'app-onboarding' | 'landing' | 'onboarding' | 'dashboard' | 'progress' | 'settings' | 'logs'>(() => {
-    // If user is authenticated/guest, show appropriate view
-    if (authState.isAuthenticated || authState.isGuest) {
-      if (!onboardingComplete) return 'app-onboarding';
-      if (session.pets.length > 0) return 'dashboard';
-      return 'landing';
+  // Initial navigation — runs ONCE on mount only.
+  // Do NOT re-run on every state change; that overrides user-initiated navigation.
+  const location = useLocation();
+  useEffect(() => {
+    if (hasInitialNav.current) return; // already navigated once
+    // Public routes that should never be auto-redirected
+    const publicRoutes = ['/login', '/signup', '/about', '/tc', '/video', '/landing'];
+    if (publicRoutes.includes(location.pathname)) {
+      hasInitialNav.current = true;
+      return;
     }
-    // First time visitors see landing page (not auth)
-    return 'landing';
-  });
+    if (authState.isAuthenticated || authState.isGuest) {
+      hasInitialNav.current = true;
+      if (!onboardingComplete) {
+        navigate('/app-onboarding');
+      } else if (session.pets.length > 0) {
+        navigate('/dashboard');
+      } else {
+        navigate('/landing');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStorageLoaded]); // intentionally wait for storage load
+
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    if (isStorageLoaded) secureStorage.setItem(STORAGE_KEY, session);
+  }, [session, isStorageLoaded]);
 
   useEffect(() => {
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authState));
-  }, [authState]);
+    if (isStorageLoaded) secureStorage.setItem(AUTH_KEY, authState);
+  }, [authState, isStorageLoaded]);
 
   const handleLogin = (email: string, password: string) => {
     // Mock login - in production, this would call Supabase
@@ -85,9 +118,9 @@ const App: React.FC = () => {
     });
 
     if (!onboardingComplete) {
-      setView('app-onboarding');
+      navigate('/app-onboarding');
     } else {
-      setView(session.pets.length > 0 ? 'dashboard' : 'landing');
+      navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
     }
   };
 
@@ -105,7 +138,7 @@ const App: React.FC = () => {
       isGuest: false
     });
 
-    setView('app-onboarding');
+    navigate('/app-onboarding');
   };
 
   const handleGuestContinue = () => {
@@ -117,27 +150,28 @@ const App: React.FC = () => {
 
     // Guests skip app onboarding and go directly to pet creation
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
-    setView(session.pets.length > 0 ? 'dashboard' : 'onboarding');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
+    navigate(session.pets.length > 0 ? '/dashboard' : '/onboarding');
   };
 
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
-    setView(session.pets.length > 0 ? 'dashboard' : 'landing');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
+    navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
   };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout? Guest data will be lost.')) {
-      localStorage.removeItem(AUTH_KEY);
+      secureStorage.removeItem(AUTH_KEY);
       if (authState.isGuest) {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(ONBOARDING_KEY);
+        secureStorage.removeItem(STORAGE_KEY);
+        secureStorage.removeItem(ONBOARDING_KEY);
         setSession({
           pets: [],
           currentPetId: null,
           history: {},
-          isGuest: true
+          isGuest: true,
+          waterLogs: {}
         });
         setOnboardingComplete(false);
       }
@@ -146,18 +180,18 @@ const App: React.FC = () => {
         user: null,
         isGuest: false
       });
-      setView('auth');
+      navigate('/login');
     }
   };
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    if (isStorageLoaded) secureStorage.setItem(STORAGE_KEY, session);
+  }, [session, isStorageLoaded]);
 
   const handleAddPet = (pet: PetProfile) => {
     // Deterministically compute and set the new session, then navigate to dashboard.
     setOnboardingComplete(true);
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    secureStorage.setItem(ONBOARDING_KEY, 'true');
 
     const newSession: UserSession = {
       ...session,
@@ -168,7 +202,7 @@ const App: React.FC = () => {
 
     console.log('[App] handleAddPet - newSession:', newSession);
     setSession(newSession);
-    setView('dashboard');
+    navigate('/dashboard');
   };
 
   const handleUpdatePet = (updatedPet: PetProfile) => {
@@ -199,7 +233,7 @@ const App: React.FC = () => {
     });
 
     if (session.pets.length <= 1) {
-      setView('landing');
+      navigate('/landing');
     }
   };
 
@@ -245,75 +279,102 @@ const App: React.FC = () => {
   const currentPet = session.pets.find(p => p.id === session.currentPetId) || null;
 
   useEffect(() => {
-    console.log('[App] State update -> view:', view, 'currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
-  }, [view, session, currentPet]);
+    console.log('[App] State update -> currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
+  }, [session, currentPet]);
 
   return (
     <div className="min-h-screen">
-      {view === 'auth' && (
-        <AuthPage 
-          onLogin={handleLogin}
-          onSignup={handleSignup}
-          onGuestContinue={handleGuestContinue}
-        />
-      )}
-      {view === 'app-onboarding' && (
-        <AppOnboarding onComplete={handleOnboardingComplete} />
-      )}
-      {view === 'landing' && (
-        <LandingPage 
-          onGetStarted={() => setView('auth')} 
-          onSignIn={() => setView('auth')}
-        />
-      )}
-      {view === 'onboarding' && (
-        <Onboarding onComplete={handleAddPet} onBack={() => setView(session.pets.length > 0 ? 'dashboard' : 'landing')} />
-      )}
-      {view === 'dashboard' && currentPet && (
-        <Dashboard 
-          session={session} 
-          currentPet={currentPet} 
-          onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
-          onAddPet={() => setView('onboarding')}
-          onUpdateHistory={handleUpdateHistory}
-          onDeleteLog={handleDeleteLog}
-          onUpdateLog={handleUpdateLog}
-          onUpdateSession={setSession}
-          onNavigate={(v) => setView(v as any)}
-        />
-      )}
-      {view === 'progress' && currentPet && (
-        <ProgressView 
-          session={session}
-          currentPet={currentPet}
-          onBack={() => setView('dashboard')}
-          onNavigate={(v) => setView(v as any)}
-        />
-      )}
-      {view === 'settings' && (
-        <SettingsView 
-          session={session}
-          authState={authState}
-          onBack={() => setView('dashboard')}
-          onNavigate={(v) => setView(v as any)}
-          onAddPet={() => setView('onboarding')}
-          onUpdateSession={(s) => setSession(s)}
-          onUpdatePet={handleUpdatePet}
-          onDeletePet={handleDeletePet}
-          onLogout={handleLogout}
-        />
-      )}
-      {view === 'logs' && currentPet && (
-        <LogsView 
-          session={session}
-          currentPet={currentPet}
-          onBack={() => setView('dashboard')}
-          onNavigate={(v) => setView(v as any)}
-          onDeleteLog={handleDeleteLog}
-          onUpdateLog={handleUpdateLog}
-        />
-      )}
+      <Routes>
+        <Route path="/login" element={
+          <Login
+            onLogin={handleLogin}
+            onSignupClick={() => navigate('/signup')}
+            onGuestContinue={handleGuestContinue}
+          />
+        } />
+        <Route path="/signup" element={
+          <SignUp
+            onSignup={handleSignup}
+            onLoginClick={() => navigate('/login')}
+            onGuestContinue={handleGuestContinue}
+          />
+        } />
+        <Route path="/app-onboarding" element={
+          <AppOnboarding onComplete={handleOnboardingComplete} />
+        } />
+        <Route path="/landing" element={
+          <LandingPage 
+            onGetStarted={() => navigate('/login')} 
+            onSignIn={() => navigate('/login')}
+          />
+        } />
+        <Route path="/onboarding" element={
+          <Onboarding onComplete={handleAddPet} onBack={() => navigate(session.pets.length > 0 ? '/dashboard' : '/landing')} />
+        } />
+        <Route path="/dashboard" element={currentPet ? (
+          <Dashboard 
+            session={session} 
+            currentPet={currentPet} 
+            onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
+            onAddPet={() => navigate('/onboarding')}
+            onUpdateHistory={handleUpdateHistory}
+            onDeleteLog={handleDeleteLog}
+            onUpdateLog={handleUpdateLog}
+            onUpdateSession={setSession}
+            onNavigate={(path) => navigate(path)}
+          />
+        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/progress" element={currentPet ? (
+          <ProgressView 
+            session={session}
+            currentPet={currentPet}
+            onBack={() => navigate('/dashboard')}
+            onNavigate={(path) => navigate(path)}
+          />
+        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/settings" element={
+          <SettingsView 
+            session={session}
+            authState={authState}
+            onBack={() => navigate('/dashboard')}
+            onNavigate={(path) => navigate(path)}
+            onAddPet={() => navigate('/onboarding')}
+            onUpdateSession={(s) => setSession(s)}
+            onUpdatePet={handleUpdatePet}
+            onDeletePet={handleDeletePet}
+            onLogout={handleLogout}
+          />
+        } />
+        <Route path="/logs" element={currentPet ? (
+          <LogsView 
+            session={session}
+            currentPet={currentPet}
+            onBack={() => navigate('/dashboard')}
+            onNavigate={(path) => navigate(path)}
+            onDeleteLog={handleDeleteLog}
+            onUpdateLog={handleUpdateLog}
+          />
+        ) : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/tc" element={<TC />} />
+        <Route path="/video" element={<Video />} />
+        <Route path="/" element={<LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />} />
+        {/* Default route - redirect to landing based on auth state */}
+        <Route path="*" element={
+          authState.isAuthenticated || authState.isGuest
+            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />) : <AppOnboarding onComplete={handleOnboardingComplete} />)
+            : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />
+        } />
+      </Routes>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 };
 
