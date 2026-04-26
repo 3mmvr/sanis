@@ -244,18 +244,9 @@ const App: React.FC = () => {
 
   const currentPet = session.pets.find(p => p.id === session.currentPetId) || null;
 
-<<<<<<< HEAD
-  // Defensive: if there are pets but no currentPetId (e.g., loaded from storage), set the first pet
-  React.useEffect(() => {
-    if (!session.currentPetId && session.pets.length > 0) {
-      setSession(prev => ({ ...prev, currentPetId: prev.pets[0].id }));
-    }
-  }, [session.pets, session.currentPetId]);
-=======
   useEffect(() => {
-    console.log('[App] State update -> view:', view, 'currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
-  }, [view, session, currentPet]);
->>>>>>> b4f817eb69b3e495d551d51cec22ccd902d2f5f9
+    console.log('[App] State update -> currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
+  }, [session, currentPet]);
 
   return (
     <div className="min-h-screen">
