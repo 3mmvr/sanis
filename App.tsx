@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { UserSession, PetProfile, MealAnalysis, PetType, BowlSize } from './types';
-import { supabase } from './utils/supabaseClient';
+import { supabase } from './supabaseClient';
 import LandingPage from './components/LandingPage';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
