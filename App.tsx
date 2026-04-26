@@ -390,14 +390,22 @@ const AppContent: React.FC = () => {
           />
         } />
         <Route path="/onboarding" element={
-          <Onboarding onComplete={handleAddPet} onBack={() => navigate(session.pets.length > 0 ? '/dashboard' : '/landing')} />
+          // Protect: block logged-in users who already have pets from re-doing initial onboarding
+          authState.isAuthenticated && !authState.isGuest && session.pets.length > 0 ? (
+            <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />
+          ) : (
+            <Onboarding onComplete={handleAddPet} onBack={() => navigate('/landing')} />
+          )
+        } />
+        <Route path="/add-pet" element={
+          <Onboarding onComplete={handleAddPet} onBack={() => navigate('/dashboard')} />
         } />
         <Route path="/dashboard" element={currentPet ? (
           <Dashboard 
             session={session} 
             currentPet={currentPet} 
             onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
-            onAddPet={() => navigate('/onboarding')}
+            onAddPet={() => navigate('/add-pet')}
             onUpdateHistory={handleUpdateHistory}
             onDeleteLog={handleDeleteLog}
             onUpdateLog={handleUpdateLog}
@@ -419,7 +427,7 @@ const AppContent: React.FC = () => {
             authState={authState}
             onBack={() => navigate('/dashboard')}
             onNavigate={(path) => navigate(path)}
-            onAddPet={() => navigate('/onboarding')}
+            onAddPet={() => navigate('/add-pet')}
             onUpdateSession={(s) => setSession(s)}
             onUpdatePet={handleUpdatePet}
             onDeletePet={handleDeletePet}
@@ -443,7 +451,7 @@ const AppContent: React.FC = () => {
         {/* Default route - redirect to landing based on auth state */}
         <Route path="*" element={
           authState.isAuthenticated || authState.isGuest
-            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />) : <AppOnboarding onComplete={handleOnboardingComplete} />)
+            ? (onboardingComplete ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/add-pet')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} /> : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />) : <AppOnboarding onComplete={handleOnboardingComplete} />)
             : <LandingPage onGetStarted={() => navigate('/login')} onSignIn={() => navigate('/login')} />
         } />
       </Routes>
