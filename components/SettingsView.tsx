@@ -168,12 +168,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </section>
 
         <section className="pt-4 space-y-3">
-          <button 
-            onClick={handleClearAll}
-            className="w-full bg-white text-red-500 font-black py-5 rounded-[24px] shadow-sm border border-red-50 active:scale-95 transition-all text-xs uppercase tracking-[0.2em]"
-          >
-            Delete All Data
-          </button>
+          {authState.isGuest && (
+            <button 
+              onClick={handleClearAll}
+              className="w-full bg-white text-red-500 font-black py-5 rounded-[24px] shadow-sm border border-red-50 active:scale-95 transition-all text-xs uppercase tracking-[0.2em]"
+            >
+              Delete All Data
+            </button>
+          )}
 
           <button 
             onClick={onLogout}
@@ -324,6 +326,16 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                           className="w-full bg-white border border-slate-200 rounded-[12px] px-4 py-2.5 font-black text-sm outline-none focus:ring-2 ring-yellow-400 transition-all placeholder:text-slate-300"
                         />
                       </div>
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">Allergies (Optional)</label>
+                        <textarea 
+                          value={editingPet.allergies || ''}
+                          onChange={(e) => setEditingPet({ ...editingPet, allergies: e.target.value })}
+                          placeholder="e.g. Chicken, Grain, Beef"
+                          className="w-full bg-white border border-slate-200 rounded-[12px] px-4 py-2.5 font-black text-sm outline-none focus:ring-2 ring-yellow-400 transition-all placeholder:text-slate-300 resize-none"
+                          rows={3}
+                        />
+                      </div>
                       <p className="text-[8px] text-slate-400 font-medium leading-relaxed">
                         Leave blank to use automatic calculation based on weight, age, and health goals.
                       </p>
@@ -339,12 +351,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 >
                   Update Profile
                 </button>
-                <button 
-                  onClick={() => handleDelete(editingPet.id)}
-                  className="w-full py-3.5 rounded-2xl font-black text-red-500 text-xs uppercase tracking-widest hover:bg-red-50 transition-colors"
-                >
-                  Remove Companion
-                </button>
+                {session.pets.length > 1 && (
+                  <button 
+                    onClick={() => handleDelete(editingPet.id)}
+                    className="w-full py-3.5 rounded-2xl font-black text-red-500 text-xs uppercase tracking-widest hover:bg-red-50 transition-colors"
+                  >
+                    Remove Companion
+                  </button>
+                )}
               </div>
             </div>
           </div>

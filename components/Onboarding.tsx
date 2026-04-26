@@ -14,7 +14,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
   const [pet, setPet] = useState<Partial<PetProfile>>({
     type: PetType.DOG,
     healthGoals: [],
-    bowlSize: BowlSize.MEDIUM
+    bowlSize: BowlSize.MEDIUM,
+    allergies: ''
   });
   const [customWaterTarget, setCustomWaterTarget] = useState<number | null>(null);
 
@@ -38,7 +39,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map(i => (
+            {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className={`h-1.5 w-6 rounded-full transition-all ${i <= step ? 'bg-[#FACC15]' : 'bg-slate-200'}`} />
             ))}
           </div>
@@ -145,9 +146,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
               <button 
                 disabled={!pet.name || !pet.breed || !pet.weight}
                 onClick={handleNext}
-                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black disabled:opacity-30 transition-all shadow-xl text-base"
+                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black disabled:opacity-30 transition-all shadow-xl text-base flex items-center justify-center gap-2"
               >
                 Continue
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
           )}
@@ -169,9 +171,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
               </div>
               <button 
                 onClick={handleNext}
-                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base"
+                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base flex items-center justify-center gap-2"
               >
                 Water Hydration
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
           )}
@@ -217,9 +220,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
 
               <button 
                 onClick={handleNext}
-                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base"
+                className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base flex items-center justify-center gap-2"
               >
                 Bowl Size Setup
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
           )}
@@ -268,6 +272,35 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 </p>
               </div>
               <button 
+                onClick={handleNext}
+                className="w-full bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base flex items-center justify-center gap-2"
+              >
+                Allergies & Restrictions
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Allergies.</h2>
+              <p className="text-slate-400 font-bold mb-6 text-sm">Food restrictions & sensitivities</p>
+              
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Allergies (Optional)</label>
+                <textarea
+                  value={pet.allergies || ''}
+                  onChange={(e) => setPet({ ...pet, allergies: e.target.value })}
+                  placeholder="e.g. Chicken, Grain, Beef"
+                  className="w-full bg-[#F9F9F9] border border-black/5 rounded-2xl px-6 py-4 text-black font-bold focus:ring-2 ring-yellow-400 outline-none transition-all resize-none"
+                  rows={4}
+                />
+                <p className="text-xs text-slate-400 font-bold">
+                  🚨 This info will be used by AI to flag unsafe ingredients.
+                </p>
+              </div>
+
+              <button 
                 onClick={() => {
                   const waterTarget = customWaterTarget !== null ? customWaterTarget : calculateWaterRecommendation(pet as PetProfile);
                   onComplete({ 
@@ -276,7 +309,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                     dailyWaterTarget: waterTarget
                   } as PetProfile);
                 }}
-                className="w-full bg-[#FACC15] text-black py-4 rounded-3xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-yellow-200/50 text-base"
+                className="w-full mt-8 bg-[#FACC15] text-black py-4 rounded-3xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-yellow-200/50 text-base"
               >
                 Launch Dashboard
               </button>
