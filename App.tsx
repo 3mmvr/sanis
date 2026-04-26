@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { UserSession, PetProfile, MealAnalysis, PetType, BowlSize } from './types';
+import { supabase } from './utils/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
@@ -54,8 +55,26 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const initStorage = async () => {
-      const savedAuth = await secureStorage.getItem<AuthState>(AUTH_KEY);
-      if (savedAuth) setAuthState(savedAuth);
+      // Check if user has an active Supabase session
+      const { data: { session: supabaseSession } } = await supabase.auth.getSession();
+      
+      if (supabaseSession?.user) {
+        // User is logged in via Supabase
+        const user = {
+          id: supabaseSession.user.id,
+          email: supabaseSession.user.email || '',
+          fullName: supabaseSession.user.user_metadata?.full_name || supabaseSession.user.email?.split('@')[0] || ''
+        };
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          isGuest: false
+        });
+      } else {
+        // No Supabase session, check local storage
+        const savedAuth = await secureStorage.getItem<AuthState>(AUTH_KEY);
+        if (savedAuth) setAuthState(savedAuth);
+      }
 
       const savedOnboarding = await secureStorage.getItem<string>(ONBOARDING_KEY);
       if (savedOnboarding === 'true') setOnboardingComplete(true);
@@ -69,6 +88,34 @@ const AppContent: React.FC = () => {
   }, []);
 
   const hasInitialNav = useRef(false);
+
+  // Listen for Supabase auth changes (e.g., email confirmation)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        // User is authenticated via Supabase
+        const user = {
+          id: session.user.id,
+          email: session.user.email || '',
+          fullName: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || ''
+        };
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          isGuest: false
+        });
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isGuest: false
+        });
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
 
   // Initial navigation — runs ONCE on mount only.
   // Do NOT re-run on every state change; that overrides user-initiated navigation.
@@ -104,41 +151,69 @@ const AppContent: React.FC = () => {
   }, [authState, isStorageLoaded]);
 
   const handleLogin = (email: string, password: string) => {
-    // Mock login - in production, this would call Supabase
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      fullName: email.split('@')[0]
-    };
-    
-    setAuthState({
-      isAuthenticated: true,
-      user,
-      isGuest: false
-    });
+    // Use Supabase for authentication
+    supabase.auth.signInWithPassword({ email, password })
+      .then(({ data, error }) => {
+        if (error) {
+          alert(`Login failed: ${error.message}`);
+          return;
+        }
 
-    if (!onboardingComplete) {
-      navigate('/app-onboarding');
-    } else {
-      navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
-    }
+        if (data.user) {
+          const user = {
+            id: data.user.id,
+            email: data.user.email || '',
+            fullName: data.user.user_metadata?.full_name || email.split('@')[0]
+          };
+
+          setAuthState({
+            isAuthenticated: true,
+            user,
+            isGuest: false
+          });
+
+          if (!onboardingComplete) {
+            navigate('/app-onboarding');
+          } else {
+            navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
+          }
+        }
+      });
   };
 
   const handleSignup = (email: string, password: string, fullName: string) => {
-    // Mock signup - in production, this would call Supabase
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      fullName
-    };
-    
-    setAuthState({
-      isAuthenticated: true,
-      user,
-      isGuest: false
-    });
+    // Use Supabase for authentication and user creation
+    supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    })
+      .then(({ data, error }) => {
+        if (error) {
+          alert(`Signup failed: ${error.message}`);
+          return;
+        }
 
-    navigate('/app-onboarding');
+        if (data.user) {
+          const user = {
+            id: data.user.id,
+            email: data.user.email || '',
+            fullName: fullName
+          };
+
+          setAuthState({
+            isAuthenticated: true,
+            user,
+            isGuest: false
+          });
+
+          navigate('/app-onboarding');
+        }
+      });
   };
 
   const handleGuestContinue = () => {
@@ -157,11 +232,17 @@ const AppContent: React.FC = () => {
   const handleOnboardingComplete = () => {
     setOnboardingComplete(true);
     secureStorage.setItem(ONBOARDING_KEY, 'true');
-    navigate(session.pets.length > 0 ? '/dashboard' : '/landing');
+    // After app onboarding, go to pet creation onboarding
+    navigate('/onboarding');
   };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout? Guest data will be lost.')) {
+      // Sign out from Supabase if user is authenticated (not guest)
+      if (authState.isAuthenticated && !authState.isGuest) {
+        supabase.auth.signOut();
+      }
+
       secureStorage.removeItem(AUTH_KEY);
       if (authState.isGuest) {
         secureStorage.removeItem(STORAGE_KEY);
