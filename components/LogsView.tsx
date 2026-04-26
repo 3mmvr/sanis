@@ -24,11 +24,9 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
 
   const history = session.history[currentPet.id] || [];
 
-  // Filter logic
   const filteredLogs = useMemo(() => {
     let filtered = [...history];
 
-    // Apply time filter
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
@@ -39,14 +37,12 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
       filtered = filtered.filter(log => log.timestamp >= weekStart);
     }
 
-    // Apply date picker filter
     if (selectedDate) {
       const selectedDateStart = new Date(selectedDate).getTime();
       const selectedDateEnd = selectedDateStart + 24 * 60 * 60 * 1000;
       filtered = filtered.filter(log => log.timestamp >= selectedDateStart && log.timestamp < selectedDateEnd);
     }
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(log => 
@@ -58,7 +54,6 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
     return filtered;
   }, [history, activeFilter, searchQuery, selectedDate]);
 
-  // Group by date
   const groupedLogs = useMemo(() => {
     const groups: Record<string, MealAnalysis[]> = {};
     filteredLogs.forEach(log => {
@@ -73,7 +68,6 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
     return groups;
   }, [filteredLogs]);
 
-  // Calculate totals
   const totalCalories = filteredLogs.reduce((sum, log) => sum + log.calories, 0);
   const totalMeals = filteredLogs.length;
 

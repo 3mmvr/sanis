@@ -22,12 +22,10 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
   const [showScanner, setShowScanner] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<MealAnalysis | null>(null);
   
-  // Get today's water log
   const today = new Date().toISOString().split('T')[0];
   const todayWaterLog = (session.waterLogs[currentPet.id] || []).find(log => log.date === today);
   const [waterCount, setWaterCount] = useState(todayWaterLog?.cups || 0);
 
-  // Update water count in database
   const handleWaterChange = (newCount: number) => {
     setWaterCount(newCount);
     
