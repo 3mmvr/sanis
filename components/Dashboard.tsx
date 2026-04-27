@@ -74,6 +74,18 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
     setActiveAnalysis(analysis);
     setShowScanner(false);
   };
+  
+  const handleReuse = (meal: MealAnalysis) => {
+    if (!currentPet) return;
+    const reusedMeal: MealAnalysis = {
+      ...meal,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      isConfirmed: false // Force re-confirmation for new input
+    };
+    onUpdateHistory(currentPet.id, reusedMeal);
+    setActiveAnalysis(reusedMeal);
+  };
 
   // Generate dynamic date strip centered on today
   const days = useMemo(() => {
@@ -311,9 +323,15 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
                         <h4 className="font-black text-black text-xs truncate max-w-[120px]">{meal.mealName}</h4>
                         <span className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md border border-black/5">{new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                      </div>
-                     <div className="flex items-center gap-1 mb-2">
-                        <ICONS.Flame className="w-3 h-3 text-yellow-500" />
-                        <span className="font-black text-black text-base">{meal.calories} <span className="text-slate-400 text-[10px] font-bold">Kcal</span></span>
+                     <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-1">
+                          <ICONS.Flame className="w-3 h-3 text-yellow-500" />
+                          <span className="font-black text-black text-base">{meal.calories} <span className="text-slate-400 text-[10px] font-bold">Kcal</span></span>
+                        </div>
+                        <div className="h-3 w-px bg-slate-100" />
+                        <div className="flex items-center gap-1">
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{meal.ingredients.reduce((s, i) => s + i.weight, 0)}g</span>
+                        </div>
                      </div>
                      <div className="flex gap-3">
                         <div className="flex items-center gap-1">
@@ -331,17 +349,29 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
                      </div>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Delete "${meal.mealName}"?`)) {
-                      if (currentPet) onDeleteLog(currentPet.id, meal.id);
-                    }
-                  }}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 active:scale-90"
-                >
-                  <ICONS.Trash className="w-3.5 h-3.5 text-red-500" />
-                </button>
+                 <div className="absolute bottom-3 right-3 flex gap-1.5">
+                   <button
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       handleReuse(meal);
+                     }}
+                     className="w-7 h-7 rounded-full bg-yellow-50 border border-yellow-100 flex items-center justify-center hover:bg-yellow-100 active:scale-90 shadow-sm"
+                     title="Reuse this meal"
+                   >
+                     <ICONS.Refresh className="w-3.5 h-3.5 text-yellow-500" />
+                   </button>
+                   <button
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       if (window.confirm(`Delete "${meal.mealName}"?`)) {
+                         if (currentPet) onDeleteLog(currentPet.id, meal.id);
+                       }
+                     }}
+                     className="w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 active:scale-90 shadow-sm"
+                   >
+                     <ICONS.Trash className="w-3.5 h-3.5 text-red-500" />
+                   </button>
+                 </div>
               </div>
             ))
           )}

@@ -13,12 +13,21 @@ interface AnalysisViewProps {
 
 const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onDelete, onUpdate }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [ingredients, setIngredients] = useState(analysis.ingredients);
   const [totalWeight, setTotalWeight] = useState(() => {
     const sum = analysis.ingredients.reduce((acc, ing) => acc + ing.weight, 0);
-    // Detect if it's likely a commercial pack (simple heuristic)
+    // If it's already confirmed, always show the real sum
+    if (analysis.isConfirmed) return sum;
+    // Otherwise apply heuristic for new scans
     const isPackaged = analysis.mealName.toLowerCase().match(/pack|bag|box|treat|snack|kibble/);
     return isPackaged ? 0 : sum;
+  });
+  const [ingredients, setIngredients] = useState(() => {
+    // Sync ingredient weights with the initial totalWeight
+    const isPackaged = !analysis.isConfirmed && analysis.mealName.toLowerCase().match(/pack|bag|box|treat|snack|kibble/);
+    if (isPackaged) {
+      return analysis.ingredients.map(ing => ({ ...ing, weight: 0 }));
+    }
+    return analysis.ingredients;
   });
   const [editingIngredient, setEditingIngredient] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
@@ -58,6 +67,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
   const handleDeleteIngredient = (index: number) => {
     const newIngredients = ingredients.filter((_, i) => i !== index);
     setIngredients(newIngredients);
+    // Sync total weight
+    const newTotal = newIngredients.reduce((acc, ing) => acc + ing.weight, 0);
+    setTotalWeight(newTotal);
+    
     if (onUpdate) {
       onUpdate({ ...analysis, ingredients: newIngredients });
     }
@@ -73,6 +86,11 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
     const newIngredients = [...ingredients];
     newIngredients[index] = { name: editName, weight: Number(editWeight) };
     setIngredients(newIngredients);
+    
+    // Sync total weight
+    const newTotal = newIngredients.reduce((acc, ing) => acc + ing.weight, 0);
+    setTotalWeight(newTotal);
+    
     setEditingIngredient(null);
     setIsConfirmed(false); // Require re-confirm if ingredients change
     if (onUpdate) {
@@ -86,6 +104,11 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
       const weight = Number(prompt('Enter weight (g):') || 0);
       const newIngredients = [...ingredients, { name, weight }];
       setIngredients(newIngredients);
+      
+      // Sync total weight
+      const newTotal = newIngredients.reduce((acc, ing) => acc + ing.weight, 0);
+      setTotalWeight(newTotal);
+      
       setIsConfirmed(false);
       if (onUpdate) {
         onUpdate({ ...analysis, ingredients: newIngredients, isConfirmed: false });

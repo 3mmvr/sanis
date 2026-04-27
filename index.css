@@ -135,7 +135,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
 .hero-image {
   flex: 0 0 420px;
   animation: slideInLeft 1s ease-out;
-  margin-left: -80px;
+  margin-left: -110px;
 }
 .hero-image img {
   width: 420px; height: auto;

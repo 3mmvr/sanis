@@ -24,6 +24,17 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
 
   const history = session.history[currentPet.id] || [];
 
+  const handleReuse = (meal: MealAnalysis) => {
+    const reusedMeal: MealAnalysis = {
+      ...meal,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      isConfirmed: false 
+    };
+    onUpdateLog(currentPet.id, reusedMeal); // onUpdateLog also handles adding if it's a new ID
+    setActiveAnalysis(reusedMeal);
+  };
+
   const filteredLogs = useMemo(() => {
     let filtered = [...history];
 
@@ -232,10 +243,16 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
                               {new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 mb-2">
-                            <ICONS.Flame className="w-3 h-3 text-yellow-500" />
-                            <span className="font-black text-black text-base">{meal.calories} <span className="text-slate-400 text-[10px] font-bold">Kcal</span></span>
-                          </div>
+                           <div className="flex items-center gap-3 mb-2">
+                             <div className="flex items-center gap-1">
+                               <ICONS.Flame className="w-3 h-3 text-yellow-500" />
+                               <span className="font-black text-black text-base">{meal.calories} <span className="text-slate-400 text-[10px] font-bold">Kcal</span></span>
+                             </div>
+                             <div className="h-3 w-px bg-slate-100" />
+                             <div className="flex items-center gap-1">
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{meal.ingredients.reduce((s, i) => s + i.weight, 0)}g</span>
+                             </div>
+                           </div>
                           <div className="flex gap-3">
                             <div className="flex items-center gap-1">
                               <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
@@ -252,17 +269,29 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Delete "${meal.mealName}"?`)) {
-                            onDeleteLog(currentPet.id, meal.id);
-                          }
-                        }}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 active:scale-90"
-                      >
-                        <ICONS.Trash className="w-3.5 h-3.5 text-red-500" />
-                      </button>
+                      <div className="absolute bottom-3 right-3 flex gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReuse(meal);
+                          }}
+                          className="w-7 h-7 rounded-full bg-yellow-50 border border-yellow-100 flex items-center justify-center hover:bg-yellow-100 active:scale-90 shadow-sm"
+                          title="Reuse this meal"
+                        >
+                          <ICONS.Refresh className="w-3.5 h-3.5 text-yellow-500" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete "${meal.mealName}"?`)) {
+                              onDeleteLog(currentPet.id, meal.id);
+                            }
+                          }}
+                          className="w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 active:scale-90 shadow-sm"
+                        >
+                          <ICONS.Trash className="w-3.5 h-3.5 text-red-500" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

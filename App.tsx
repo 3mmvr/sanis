@@ -341,11 +341,15 @@ const AppContent: React.FC = () => {
   const handleUpdateLog = (petId: string, updatedLog: MealAnalysis) => {
     setSession(prev => {
       const petHistory = prev.history[petId] || [];
+      const exists = petHistory.some(log => log.id === updatedLog.id);
+      
       return {
         ...prev,
         history: {
           ...prev.history,
-          [petId]: petHistory.map(log => log.id === updatedLog.id ? updatedLog : log)
+          [petId]: exists 
+            ? petHistory.map(log => log.id === updatedLog.id ? updatedLog : log)
+            : [updatedLog, ...petHistory]
         }
       };
     });
