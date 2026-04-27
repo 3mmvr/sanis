@@ -176,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
         <div className="bg-white rounded-[28px] p-5 shadow-sm border border-black/5">
           <div className="mb-4">
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-black">{Math.round(caloriesConsumed)}</span>
+              <span className={`text-xl font-black ${caloriesConsumed > dailyTarget ? 'text-red-600' : 'text-black'}`}>{Math.round(caloriesConsumed)}</span>
               <span className="text-slate-400 text-xs font-bold">/{Math.round(dailyTarget)}</span>
             </div>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Kcal Today</p>
@@ -184,7 +184,13 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
           <div className="relative w-full aspect-square max-w-[120px] mx-auto">
              <svg className="w-full h-full transform -rotate-90">
                 <circle cx="50%" cy="50%" r="42%" className="stroke-[#F1F1F1]" strokeWidth="10" fill="transparent" />
-                <circle cx="50%" cy="50%" r="42%" className="stroke-yellow-400 transition-all duration-1000 ease-out" strokeWidth="10" fill="transparent" 
+                <circle 
+                  cx="50%" 
+                  cy="50%" 
+                  r="42%" 
+                  className={`${caloriesConsumed > dailyTarget ? 'stroke-red-500' : 'stroke-yellow-400'} transition-all duration-1000 ease-out`} 
+                  strokeWidth="10" 
+                  fill="transparent" 
                   strokeDasharray="264"
                   strokeDashoffset={264 * (1 - progressPercent / 100)}
                   strokeLinecap="round" 
