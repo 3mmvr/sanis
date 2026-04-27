@@ -2,11 +2,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 interface LandingPageProps {
+  authState: {
+    isAuthenticated: boolean;
+    isGuest: boolean;
+  };
   onGetStarted: () => void;
   onSignIn: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ authState, onGetStarted, onSignIn }) => {
   const navigate = useNavigate();
   const navbarRef = useRef<HTMLElement>(null);
   const navLinksRef = useRef<HTMLDivElement>(null);
@@ -109,7 +113,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
             <a href="#footer" className={activeNavLink === 'footer' ? 'active' : ''} onClick={(e) => handleNavLinkClick(e, 'footer')}>Contact</a>
           </div>
           <div className="nav-right">
-            <a href="/login" className="nav-login" id="login-btn" onClick={(e) => { e.preventDefault(); onSignIn(); }}>Login <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l5 5 5-5"/></svg></a>
+            <a href="/login" className="nav-login" id="login-btn" onClick={(e) => { 
+              e.preventDefault(); 
+              if (authState.isAuthenticated || authState.isGuest) {
+                navigate('/dashboard');
+              } else {
+                onSignIn(); 
+              }
+            }}>Login <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l5 5 5-5"/></svg></a>
           </div>
           <button className={`mobile-toggle ${isMobileMenuOpen ? 'active' : ''}`} id="mobile-toggle" aria-label="Toggle menu" onClick={toggleMobileMenu} ref={mobileToggleRef}>
             <span></span><span></span><span></span>
@@ -132,7 +143,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 2l10 6-10 6V2z"/></svg>
                 Watch Video
               </a>
-              <a href="/signup" className="btn btn-outline" onClick={(e) => { e.preventDefault(); onGetStarted(); }}>Start Trial</a>
+              <a href="/signup" className="btn btn-outline" onClick={(e) => { 
+                e.preventDefault(); 
+                if (authState.isAuthenticated || authState.isGuest) {
+                  navigate('/dashboard');
+                } else {
+                  onGetStarted(); 
+                }
+              }}>Start Trial</a>
             </div>
           </div>
         </div>

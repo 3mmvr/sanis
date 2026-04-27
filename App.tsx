@@ -384,6 +384,7 @@ const AppContent: React.FC = () => {
         } />
         <Route path="/landing" element={
           <LandingPage 
+            authState={authState}
             onGetStarted={() => navigate('/signup')} 
             onSignIn={() => navigate('/login')}
           />
@@ -391,10 +392,10 @@ const AppContent: React.FC = () => {
         <Route path="/onboarding" element={
           <Onboarding onComplete={handleAddPet} onBack={() => navigate(session.pets.length > 0 ? '/dashboard' : '/landing')} />
         } />
-        <Route path="/dashboard" element={currentPet ? (
+        <Route path="/dashboard" element={authState.isAuthenticated || authState.isGuest ? (
           <Dashboard 
             session={session} 
-            currentPet={currentPet} 
+            currentPet={currentPet || undefined} 
             onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))}
             onAddPet={() => navigate('/onboarding')}
             onUpdateHistory={handleUpdateHistory}
@@ -404,15 +405,15 @@ const AppContent: React.FC = () => {
             onNavigate={(path) => navigate(path)}
             userName={authState.user?.fullName}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
-        <Route path="/progress" element={currentPet ? (
+        ) : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/progress" element={authState.isAuthenticated || authState.isGuest ? (
           <ProgressView 
             session={session}
-            currentPet={currentPet}
+            currentPet={currentPet || session.pets[0]}
             onBack={() => navigate('/dashboard')}
             onNavigate={(path) => navigate(path)}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
+        ) : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/settings" element={
           <SettingsView 
             session={session}
@@ -426,25 +427,25 @@ const AppContent: React.FC = () => {
             onLogout={handleLogout}
           />
         } />
-        <Route path="/logs" element={currentPet ? (
+        <Route path="/logs" element={authState.isAuthenticated || authState.isGuest ? (
           <LogsView 
             session={session}
-            currentPet={currentPet}
+            currentPet={currentPet || session.pets[0]}
             onBack={() => navigate('/dashboard')}
             onNavigate={(path) => navigate(path)}
             onDeleteLog={handleDeleteLog}
             onUpdateLog={handleUpdateLog}
           />
-        ) : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
+        ) : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/about" element={<About />} />
         <Route path="/tc" element={<TC />} />
         <Route path="/video" element={<Video />} />
-        <Route path="/" element={<LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
+        <Route path="/" element={<LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         {/* Default route - redirect to landing based on auth state */}
         <Route path="*" element={
           authState.isAuthenticated || authState.isGuest
             ? (session.pets.length > 0 ? <Dashboard session={session} currentPet={currentPet!} onPetSelect={(id) => setSession(s => ({ ...s, currentPetId: id }))} onAddPet={() => navigate('/onboarding')} onUpdateHistory={handleUpdateHistory} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} onUpdateSession={setSession} onNavigate={(path) => navigate(path)} userName={authState.user?.fullName} /> : (onboardingComplete ? <Onboarding onComplete={handleAddPet} onBack={() => navigate('/landing')} /> : <AppOnboarding userName={authState.user?.fullName} onComplete={handleOnboardingComplete} />))
-            : <LandingPage onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />
+            : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />
         } />
       </Routes>
     </div>

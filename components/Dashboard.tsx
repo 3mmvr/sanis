@@ -8,7 +8,7 @@ import { calculateStreak } from '../utils/streakCalculator';
 
 interface DashboardProps {
   session: UserSession;
-  currentPet: PetProfile;
+  currentPet?: PetProfile;
   onPetSelect: (id: string) => void;
   onAddPet: () => void;
   onUpdateHistory: (petId: string, analysis: MealAnalysis) => void;
@@ -24,10 +24,11 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
   const [activeAnalysis, setActiveAnalysis] = useState<MealAnalysis | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
-  const todayWaterLog = (session.waterLogs[currentPet.id] || []).find(log => log.date === today);
+  const todayWaterLog = currentPet ? (session.waterLogs[currentPet.id] || []).find(log => log.date === today) : null;
   const [waterCount, setWaterCount] = useState(todayWaterLog?.cups || 0);
 
   const handleWaterChange = (newCount: number) => {
+    if (!currentPet) return;
     setWaterCount(newCount);
     
     const updatedWaterLogs = { ...session.waterLogs };
@@ -46,11 +47,11 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
     onUpdateSession({ ...session, waterLogs: updatedWaterLogs });
   };
 
-  const history = session.history[currentPet.id] || [];
+  const history = currentPet ? (session.history[currentPet.id] || []) : [];
   const todayHistory = history.filter(m => new Date(m.timestamp).toDateString() === new Date().toDateString());
   
   // Use custom daily calorie target if set, otherwise calculate: roughly 60-70 kcal per kg for average pets
-  const dailyTarget = currentPet.dailyCalorieTarget || (currentPet.weight * 65); 
+  const dailyTarget = currentPet ? (currentPet.dailyCalorieTarget || (currentPet.weight * 65)) : 2000; 
   const caloriesConsumed = todayHistory.reduce((sum, m) => sum + m.calories, 0);
   const progressPercent = Math.min((caloriesConsumed / dailyTarget) * 100, 100);
 
@@ -58,6 +59,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
   const streakData = useMemo(() => calculateStreak(history), [history]);
 
   const handleAnalysisComplete = (analysis: MealAnalysis) => {
+    if (!currentPet) return;
     onUpdateHistory(currentPet.id, analysis);
     setActiveAnalysis(analysis);
     setShowScanner(false);
@@ -95,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
                 key={pet.id} 
                 onClick={() => onPetSelect(pet.id)}
                 className={`w-9 h-9 rounded-full border-[2.5px] transition-all duration-300 flex items-center justify-center text-lg shadow-sm ${
-                  currentPet.id === pet.id 
+                  currentPet?.id === pet.id 
                     ? 'z-10 scale-110 border-black bg-white ring-4 ring-black/5' 
                     : 'border-white bg-slate-200 opacity-60 hover:opacity-100'
                 }`}
@@ -135,6 +137,29 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
         </div>
       </div>
 
+      {/* No Pet Alarm */}
+      {session.pets.length === 0 && (
+        <div className="mx-6 mb-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-[24px] p-5 flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-xl">⚠️</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-orange-900 font-black text-sm mb-1 leading-tight">No Pet Profile Found</p>
+              <p className="text-orange-700 text-[11px] font-bold leading-relaxed mb-3">
+                Please add at least one pet to enable AI nutritional analysis and meal tracking.
+              </p>
+              <button 
+                onClick={onAddPet}
+                className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-full hover:bg-orange-600 transition-colors shadow-sm"
+              >
+                + Add Your First Pet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Stats Grid - Reduced padding/margins */}
       <div className="px-6 grid grid-cols-2 gap-3.5 mt-2">
         {/* Progress Card */}
@@ -168,10 +193,10 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
         <div className="bg-white rounded-[28px] p-5 shadow-sm border border-black/5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xl font-black text-black capitalize truncate">{currentPet.name}</span>
+              <span className="text-xl font-black text-black capitalize truncate">{currentPet?.name || 'No Pet'}</span>
             </div>
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight truncate block">
-              {currentPet.breed} &bull; {currentPet.weight}kg
+              {currentPet ? `${currentPet.breed} • ${currentPet.weight}kg` : 'Add a pet profile to start'}
             </span>
           </div>
           
@@ -192,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
                <div>
                  <p className="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Hydration</p>
                  <p className="text-xs font-black text-black">
-                   {currentPet.dailyWaterTarget ? Math.round((waterCount / currentPet.dailyWaterTarget) * 100) : Math.round((waterCount / 8) * 100)}%
+                   {currentPet ? (currentPet.dailyWaterTarget ? Math.round((waterCount / currentPet.dailyWaterTarget) * 100) : Math.round((waterCount / 8) * 100)) : 0}%
                  </p>
                </div>
             </div>
@@ -210,7 +235,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
             <div>
               <p className="font-black text-black text-sm">Hydration</p>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wide">
-                {waterCount} / {currentPet.dailyWaterTarget || 8} Cups
+                {waterCount} / {currentPet?.dailyWaterTarget || 8} Cups
               </p>
             </div>
           </div>
@@ -294,7 +319,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
                   onClick={(e) => {
                     e.stopPropagation();
                     if (window.confirm(`Delete "${meal.mealName}"?`)) {
-                      onDeleteLog(currentPet.id, meal.id);
+                      if (currentPet) onDeleteLog(currentPet.id, meal.id);
                     }
                   }}
                   className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 active:scale-90"
@@ -346,16 +371,16 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
         <Scanner 
           onClose={() => setShowScanner(false)} 
           onComplete={handleAnalysisComplete}
-          pet={currentPet}
+          pet={currentPet!}
         />
       )}
       {activeAnalysis && (
         <AnalysisView 
           analysis={activeAnalysis} 
           onClose={() => setActiveAnalysis(null)} 
-          pet={currentPet}
-          onDelete={(logId) => onDeleteLog(currentPet.id, logId)}
-          onUpdate={(updatedLog) => onUpdateLog(currentPet.id, updatedLog)}
+          pet={currentPet!}
+          onDelete={(logId) => currentPet && onDeleteLog(currentPet.id, logId)}
+          onUpdate={(updatedLog) => currentPet && onUpdateLog(currentPet.id, updatedLog)}
         />
       )}
     </div>

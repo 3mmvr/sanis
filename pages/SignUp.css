@@ -233,3 +233,10 @@
   .auth-page { padding: 20px; }
   .auth-header h1 { font-size: 32px; }
 }
+
+.btn-disabled-google {
+  filter: grayscale(1) !important;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important; /* Allow alert to show */
+}

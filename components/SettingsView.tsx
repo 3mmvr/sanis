@@ -38,6 +38,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [editingPet, setEditingPet] = useState<PetProfile | null>(null);
   const [showAdvancedTargets, setShowAdvancedTargets] = useState(false);
+  const [units, setUnits] = useState('Metric (kg/ml)');
+  const [notifications, setNotifications] = useState('On');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   const handleClearAll = () => {
     if (confirm("Are you sure you want to clear all data? This cannot be undone.")) {
@@ -76,6 +84,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <h1 className="text-xl font-black text-black tracking-tight">Preferences</h1>
+        {toast && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-in fade-in zoom-in duration-300 z-50">
+            {toast}
+          </div>
+        )}
       </header>
 
       <main className="px-6 space-y-6">
@@ -153,17 +166,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         <section>
           <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Preferences</h3>
           <div className="bg-white rounded-[28px] overflow-hidden shadow-sm border border-black/5">
-            {[
-              { label: 'Units', value: 'Metric (kg/ml)' },
-              { label: 'Notifications', value: 'On' },
-              { label: 'Cloud Backup', value: 'Active' },
-              { label: 'Vision Quality', value: 'High' }
-            ].map((item, i) => (
-              <button key={i} className={`w-full px-6 py-5 flex justify-between items-center text-left hover:bg-slate-50 transition-colors ${i < 3 ? 'border-b border-black/5' : ''}`}>
-                <span className="font-black text-black text-[14px]">{item.label}</span>
-                <span className="text-slate-400 font-bold text-sm">{item.value}</span>
-              </button>
-            ))}
+            <button 
+              onClick={() => {
+                const next = units === 'Metric (kg/ml)' ? 'Imperial (lb/oz)' : 'Metric (kg/ml)';
+                setUnits(next);
+                showToast(`Units set to ${next.split(' ')[0]}`);
+              }}
+              className="w-full px-6 py-5 flex justify-between items-center text-left hover:bg-slate-50 transition-colors border-b border-black/5"
+            >
+              <span className="font-black text-black text-[14px]">Units</span>
+              <span className="text-slate-400 font-bold text-sm">{units}</span>
+            </button>
+            <button 
+              onClick={() => {
+                const next = notifications === 'On' ? 'Off' : 'On';
+                setNotifications(next);
+                showToast(`Notifications ${next}`);
+              }}
+              className="w-full px-6 py-5 flex justify-between items-center text-left hover:bg-slate-50 transition-colors"
+            >
+              <span className="font-black text-black text-[14px]">Notifications</span>
+              <span className="text-slate-400 font-bold text-sm">{notifications}</span>
+            </button>
           </div>
         </section>
 
