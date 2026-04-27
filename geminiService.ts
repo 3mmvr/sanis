@@ -52,7 +52,6 @@ export class GeminiService {
 
       // If not found or unavailable, try next model
       if ((isNotFound || isUnavailable) && modelIndex < this.AVAILABLE_MODELS.length - 1) {
-        console.log(`Model ${currentModel} failed (${isNotFound ? '404' : '503'}), trying ${this.AVAILABLE_MODELS[modelIndex + 1]}...`);
         return this.callWithRetry(fn, retries, delay, modelIndex + 1);
       }
 
@@ -98,7 +97,6 @@ export class GeminiService {
       const result = JSON.parse(response.text || '{}');
       return result;
     }).catch(error => {
-      console.error("Image validation failed", error);
       return { isValid: true };
     });
   }
@@ -112,7 +110,6 @@ export class GeminiService {
     const imageKey = `${fingerprint}${pet.id}`;
     
     if (this.imageAnalysisCache.has(imageKey)) {
-      console.log(`[Cache Hit] Recalling analysis for image (ID: ${imageKey.substring(0, 8)}...)`);
       return {
         ...this.imageAnalysisCache.get(imageKey),
         id: Math.random().toString(36).substr(2, 9), // Ensure a unique log ID even for cached data
@@ -355,7 +352,6 @@ export class GeminiService {
         imageUrl: `data:image/jpeg;base64,${imageB64}`
       };
       
-      console.log(`[Learning] Analyzed new image. Total Kcal: ${result.calories}`);
       this.imageAnalysisCache.set(imageKey, result);
       this.persistMemory();
       return result;
@@ -380,7 +376,6 @@ export class GeminiService {
       .join('|');
 
     if (this.calculationCache.has(cacheKey)) {
-      console.log("[Cache] Using previous calculation for:", ingredientList);
       return this.calculationCache.get(cacheKey);
     }
 
@@ -493,7 +488,6 @@ export class GeminiService {
         carbs: Number(totalCarb.toFixed(1))
       };
       
-      console.log(`[Cache Update] Re-analyzed ingredients. Total Kcal: ${finalResult.calories}`);
       this.calculationCache.set(cacheKey, finalResult);
       if (hasNewLearning) this.persistMemory();
       return finalResult;
@@ -520,7 +514,6 @@ export class GeminiService {
 
       return this.decodeBase64(base64Audio);
     } catch (error) {
-      console.error("TTS failed", error);
       return null;
     }
   }

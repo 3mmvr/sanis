@@ -42,9 +42,7 @@ const AppContent: React.FC = () => {
   });
 
   useEffect(() => {
-    const apiKey = (import.meta.env.VITE_API_KEY || '').replace(/[$'"\s]/g, '').trim();
-    const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'N/A';
-    console.log(`[Auth] API Key: ${maskedKey} | Length: ${apiKey.length}`);
+    // API key check removed for production
   }, []);
 
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -275,7 +273,6 @@ const AppContent: React.FC = () => {
       isGuest: false
     };
 
-    console.log('[App] handleAddPet - newSession:', newSession);
     setSession(newSession);
     navigate('/dashboard');
   };
@@ -358,7 +355,7 @@ const AppContent: React.FC = () => {
   const currentPet = session.pets.find(p => p.id === session.currentPetId) || null;
 
   useEffect(() => {
-    console.log('[App] State update -> currentPetId:', session.currentPetId, 'pets.length:', session.pets.length, 'currentPet:', currentPet);
+    // State update log removed for production
   }, [session, currentPet]);
 
   return (
