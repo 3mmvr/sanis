@@ -21,8 +21,6 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
   const weeklyStats = useMemo(() => calculateWeeklyStats(history), [history]);
 
   const dataPoints = useMemo(() => {
-    if (history.length === 0) return [0];
-    
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
@@ -30,64 +28,59 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
     let groupByDays: number;
     
     switch (timeFilter) {
-      case 'week':
-        daysToShow = 7;
-        groupByDays = 1;
-        break;
-      case 'month':
-        daysToShow = 30;
-        groupByDays = 1;
-        break;
-      case '6months':
-        daysToShow = 180;
-        groupByDays = 7;
-        break;
-      case '12months':
-        daysToShow = 365;
-        groupByDays = 30;
-        break;
+      case 'week': daysToShow = 7; groupByDays = 1; break;
+      case 'month': daysToShow = 30; groupByDays = 1; break;
+      case '6months': daysToShow = 180; groupByDays = 7; break;
+      case '12months': daysToShow = 365; groupByDays = 30; break;
+      default: daysToShow = 7; groupByDays = 1;
     }
     
-    const dataArray: number[] = [];
+    const result: number[] = [];
     const periods = Math.ceil(daysToShow / groupByDays);
     
-    for (let i = 0; i < periods; i++) {
+    for (let i = periods - 1; i >= 0; i--) {
       const periodEnd = new Date(today);
-      periodEnd.setDate(periodEnd.getDate() - (i * groupByDays));
+      periodEnd.setDate(today.getDate() - (i * groupByDays));
       
       const periodStart = new Date(periodEnd);
-      periodStart.setDate(periodStart.getDate() - groupByDays);
+      periodStart.setDate(periodEnd.getDate() - groupByDays + 1);
       periodStart.setHours(0, 0, 0, 0);
       
       const periodTotal = history
         .filter(meal => {
-          const mealDate = new Date(meal.timestamp);
-          return mealDate >= periodStart && mealDate <= periodEnd;
+          const mDate = new Date(meal.timestamp);
+          return mDate >= periodStart && mDate <= periodEnd;
         })
-        .reduce((sum, meal) => sum + meal.calories, 0);
+        .reduce((sum, meal) => sum + (meal.calories || 0), 0);
       
-      const avgCalories = groupByDays > 1 ? periodTotal / groupByDays : periodTotal;
-      dataArray.unshift(avgCalories);
+      result.push(groupByDays > 1 ? periodTotal / groupByDays : periodTotal);
     }
     
-    return dataArray.length > 0 ? dataArray : [0];
+    return result;
   }, [history, timeFilter]);
 
   const maxVal = Math.max(...dataPoints, 1200);
-  const minVal = Math.min(...dataPoints.filter(v => v > 0), 0);
-  const range = maxVal - minVal || 1;
+  const minVal = 0;
+  const range = maxVal || 1200;
 
   // SVG Path generation
   const chartWidth = 300;
   const chartHeight = 160;
+  
   const points = dataPoints.map((val, i) => {
-    const x = (i / (dataPoints.length - 1)) * chartWidth;
-    const y = chartHeight - ((val - minVal) / range) * chartHeight;
-    return `${x},${y}`;
+    const x = dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * chartWidth : chartWidth / 2;
+    const y = chartHeight - (val / range) * chartHeight;
+    return { x, y, val };
   });
 
-  const pathD = `M ${points.join(' L ')}`;
-  const areaD = `M 0,${chartHeight} L ${points.join(' L ')} L ${chartWidth},${chartHeight} Z`;
+  const pathD = points.length > 1 
+    ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}` 
+    : `M ${points[0].x - 10},${points[0].y} L ${points[0].x + 10},${points[0].y}`;
+    
+  const areaD = points.length > 1
+    ? `M 0,${chartHeight} L ${points.map(p => `${p.x},${p.y}`).join(' L ')} L ${chartWidth},${chartHeight} Z`
+    : `M ${points[0].x - 10},${chartHeight} L ${points[0].x - 10},${points[0].y} L ${points[0].x + 10},${points[0].y} L ${points[0].x + 10},${chartHeight} Z`;
+
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-36">
@@ -166,14 +159,21 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
                       {/* Main Line */}
                       <path d={pathD} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       {/* Current Point */}
-                      <circle cx={points[points.length-1].split(',')[0]} cy={points[points.length-1].split(',')[1]} r="4" fill="#22C55E" stroke="white" strokeWidth="2" />
+                      {points.length > 0 && (
+                        <circle cx={points[points.length-1].x} cy={points[points.length-1].y} r="4" fill="#22C55E" stroke="white" strokeWidth="2" />
+                      )}
                    </svg>
                    
                    {/* Tooltip Mockup */}
-                   {dataPoints.length > 1 && dataPoints[dataPoints.length - 2] > 0 && (
-                   <div className="absolute top-[30%] left-[65%] bg-black text-white px-3 py-1.5 rounded-xl shadow-2xl pointer-events-none transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
-                      <p className="text-[10px] font-black leading-none">{Math.round(dataPoints[dataPoints.length-2])} Kcal</p>
-                      <p className="text-[7px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Yesterday</p>
+                   {dataPoints.length > 1 && dataPoints[dataPoints.length - 1] > 0 && (
+                   <div className="absolute bg-black text-white px-3 py-1.5 rounded-xl shadow-2xl pointer-events-none flex flex-col items-center z-10" 
+                        style={{ 
+                          left: `${(points[points.length-1].x / chartWidth) * 100}%`,
+                          top: `${(points[points.length-1].y / chartHeight) * 100}%`,
+                          transform: 'translate(-50%, -140%)'
+                        }}>
+                      <p className="text-[10px] font-black leading-none">{Math.round(dataPoints[dataPoints.length-1])} Kcal</p>
+                      <p className="text-[7px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Today</p>
                       <div className="w-2 h-2 bg-black rotate-45 absolute -bottom-1" />
                    </div>
                    )}
