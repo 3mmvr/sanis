@@ -48,12 +48,22 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
   };
 
   const history = currentPet ? (session.history[currentPet.id] || []) : [];
-  const todayHistory = history.filter(m => new Date(m.timestamp).toDateString() === new Date().toDateString());
   
-  // Use custom daily calorie target if set, otherwise calculate: roughly 60-70 kcal per kg for average pets
+  // More robust 'Today' filter that ignores timezone noise
+  const todayHistory = history.filter(m => {
+    const mealDate = new Date(m.timestamp);
+    const now = new Date();
+    return mealDate.getDate() === now.getDate() && 
+           mealDate.getMonth() === now.getMonth() && 
+           mealDate.getFullYear() === now.getFullYear();
+  });
+  
   const dailyTarget = currentPet ? (currentPet.dailyCalorieTarget || (currentPet.weight * 65)) : 2000; 
-  const caloriesConsumed = todayHistory.reduce((sum, m) => sum + m.calories, 0);
-  const progressPercent = Math.min((caloriesConsumed / dailyTarget) * 100, 100);
+  const caloriesConsumed = todayHistory.reduce((sum, m) => sum + (m.calories || 0), 0);
+  const progressPercent = dailyTarget > 0 ? Math.min((caloriesConsumed / dailyTarget) * 100, 100) : 0;
+
+  // Debugging progress updates
+  console.log(`[Dashboard] Calorie Update -> Consumed: ${caloriesConsumed}/${dailyTarget} (${progressPercent.toFixed(1)}%)`);
 
   // Calculate real streak data
   const streakData = useMemo(() => calculateStreak(history), [history]);

@@ -115,6 +115,7 @@ export class GeminiService {
       console.log(`[Cache Hit] Recalling analysis for image (ID: ${imageKey.substring(0, 8)}...)`);
       return {
         ...this.imageAnalysisCache.get(imageKey),
+        id: Math.random().toString(36).substr(2, 9), // Ensure a unique log ID even for cached data
         timestamp: Date.now()
       };
     }

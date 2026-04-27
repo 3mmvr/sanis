@@ -269,7 +269,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
                                autoFocus
                              />
                            ) : (
-                             <span className="font-black text-black text-xs block truncate max-w-[100px]">{ing.name}</span>
+                                                           <span className="font-black text-black text-xs block whitespace-normal break-words">{ing.name}</span>
                            )}
                          </td>
                          <td className="px-4 py-4">
