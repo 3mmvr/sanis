@@ -18,11 +18,11 @@ const Video: React.FC = () => {
       </nav>
       <div className="video-container" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
         <iframe 
-          src="https://drive.google.com/file/d/1UCOlo1SCenLxj4-UGp_XjIZ5krDlwBbi/preview" 
+          src="https://www.youtube.com/embed/O11W5cxVnRU" 
           width="100%" 
           height="100%" 
           style={{ minHeight: '60vh', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', background: '#000', border: 'none' }} 
-          allow="autoplay" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
           allowFullScreen
         ></iframe>
       </div>

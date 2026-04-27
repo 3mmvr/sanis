@@ -65,11 +65,15 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
 
   // Generate dynamic date strip centered on today
   const days = useMemo(() => {
-    const now = new Date();
+    const today = new Date();
+    // Reset hours to ensure consistent 'active' check
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
     const result = [];
     for (let i = -3; i <= 3; i++) {
-      const d = new Date();
-      d.setDate(now.getDate() + i);
+      const d = new Date(startOfToday);
+      d.setDate(startOfToday.getDate() + i);
+      
       result.push({
         d: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()],
         n: d.getDate(),
@@ -84,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
       {/* Refined Header */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-center bg-[#F8F8F8]/90 backdrop-blur-xl sticky top-0 z-30">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-black text-black tracking-tightest lowercase">{userName || 'sanis'}</h1>
+          <h1 className="text-lg font-black text-black tracking-tightest uppercase">sanis</h1>
           <div className="flex -space-x-1.5 items-center">
             {session.pets.map(pet => (
               <button 

@@ -592,7 +592,8 @@ button { cursor: pointer; border: none; font-family: inherit; }
   
   /* HIGHER PRIORITY OVERRIDES */
   .about-heading-stack h2 { font-size: 50px !important; }
-  .smart-doctor { height: 60%; opacity: 0.5; right: -20px; }
+  .smart-doctor { display: none !important; }
+  .smart-card-main { justify-content: center; text-align: center; padding: 30px 20px; }
   .smart-card-main-content { max-width: 100% !important; }
   
   .dashboard-wrapper { overflow-x: hidden; padding: 16px; }

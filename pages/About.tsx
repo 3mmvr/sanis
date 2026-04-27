@@ -41,7 +41,13 @@ const About: React.FC = () => {
             <p style={{ margin: 0, fontSize: '15px' }}>Establishing partnerships with veterinarians and clinics to enable shared health records and proactive care.</p>
           </div>
           
-          <a href="/" className="back-home" style={{ display: 'inline-block', marginTop: '40px', fontWeight: 700, color: 'var(--teal)', textDecoration: 'underline' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>Back to Homepage</a>
+          <button 
+            className="btn btn-teal" 
+            style={{ marginTop: '40px', borderRadius: '40px' }} 
+            onClick={(e) => { e.preventDefault(); navigate('/'); }}
+          >
+            Back to Homepage
+          </button>
         </div>
       </div>
       <style>{`

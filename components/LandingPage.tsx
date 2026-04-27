@@ -100,7 +100,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
         <div className="container">
           <a href="/" className="logo" id="logo" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
             <img src="/assets/logo_withoutbg.png" className="logo-icon" alt="Logo" style={{ height: '36px', width: 'auto' }} />
-            <span className="logo-text">SANIS</span>
+            <span className="logo-text font-black tracking-tightest uppercase" style={{ transform: 'translateY(8px)' }}>sanis</span>
           </a>
           <div className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`} id="nav-links" ref={navLinksRef}>
             <a href="#hero" className={activeNavLink === 'hero' ? 'active' : ''} onClick={(e) => handleNavLinkClick(e, 'hero')}>Home</a>
