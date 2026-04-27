@@ -88,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session, currentPet, onPetSelect,
       {/* Refined Header */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-center bg-[#F8F8F8]/90 backdrop-blur-xl sticky top-0 z-30">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-black text-black tracking-tightest uppercase">sanis</h1>
+          <h1 className="text-lg font-black text-black tracking-tightest uppercase">{userName || 'sanis'}</h1>
           <div className="flex -space-x-1.5 items-center">
             {session.pets.map(pet => (
               <button 
