@@ -73,7 +73,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
 
           {step === 2 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Vitals.</h2>
+              <h2 className="text-2xl font-black text-[#F3A528] mb-2 tracking-tight">Vitals.</h2>
               <p className="text-slate-400 font-bold mb-6 italic text-sm">Metabolic precision engine</p>
               <div className="space-y-6">
                 <div>
@@ -197,7 +197,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
 
           {step === 3 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Goals.</h2>
+              <h2 className="text-2xl font-black text-[#F3A528] mb-2 tracking-tight">Goals.</h2>
               <p className="text-slate-400 font-bold mb-6 text-sm">AI customization priority</p>
               <div className="grid grid-cols-1 gap-3">
                 {HEALTH_GOALS[pet.type || PetType.DOG].map(goal => (
@@ -214,14 +214,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 onClick={handleNext}
                 className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base"
               >
-                Water Hydration
+                Continue
               </button>
             </div>
           )}
 
           {step === 4 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Daily Hydration.</h2>
+              <h2 className="text-2xl font-black text-[#F3A528] mb-2 tracking-tight">Daily Hydration.</h2>
               <p className="text-slate-400 font-bold mb-6 text-sm">Water intake recommendation</p>
               
               {pet.weight && (
@@ -262,14 +262,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 onClick={handleNext}
                 className="w-full mt-8 bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base"
               >
-                Bowl Size Setup
+                Continue
               </button>
             </div>
           )}
 
           {step === 5 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 text-center">
-              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Bowl Size Anchor.</h2>
+              <h2 className="text-2xl font-black text-[#F3A528] mb-2 tracking-tight">Bowl Size Anchor.</h2>
               <p className="text-slate-400 font-bold mb-2 text-sm">Volume calibration base for AI precision</p>
               <p className="text-xs text-slate-500 font-bold mb-8 px-4">
                 Select your pet's typical feeding bowl size. This helps our AI accurately estimate portion sizes.
@@ -314,14 +314,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 onClick={handleNext}
                 className="w-full bg-black text-white py-4 rounded-3xl font-black transition-all shadow-xl text-base"
               >
-                Allergies & Restrictions
+                Continue
               </button>
             </div>
           )}
 
           {step === 6 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-2xl font-black text-black mb-2 tracking-tight">Allergies.</h2>
+              <h2 className="text-2xl font-black text-[#F3A528] mb-2 tracking-tight">Allergies.</h2>
               <p className="text-slate-400 font-bold mb-6 text-sm">Food restrictions & sensitivities</p>
               
               <div className="space-y-4">
@@ -349,7 +349,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
                 }}
                 className="w-full mt-8 bg-[#FACC15] text-black py-4 rounded-3xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-yellow-200/50 text-base"
               >
-                Launch Dashboard
+                Continue
               </button>
             </div>
           )}
