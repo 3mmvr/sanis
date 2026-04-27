@@ -4,51 +4,77 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { PetProfile, MealAnalysis } from "./types";
 
 export class GeminiService {
-  private ai: GoogleGenAI;
+  private calculationCache: Map<string, any> = new Map();
+  private dynamicDensities: Map<string, any>;
+  private imageAnalysisCache: Map<string, any>;
 
   constructor() {
     // Standard Vite environment variable access
     let apiKey = import.meta.env.VITE_API_KEY || '';
-    
-    // Cleanup: Remove any accidental symbols ($), quotes, or whitespace
     apiKey = apiKey.replace(/[$'"\s]/g, '').trim();
-    
     this.ai = new GoogleGenAI({ apiKey });
+
+    // Load persistent memory
+    const savedDensities = localStorage.getItem('sanis_densities');
+    this.dynamicDensities = new Map(savedDensities ? JSON.parse(savedDensities) : []);
+    
+    const savedImageCache = localStorage.getItem('sanis_image_cache');
+    this.imageAnalysisCache = new Map(savedImageCache ? JSON.parse(savedImageCache) : []);
+  }
+
+  private persistMemory() {
+    localStorage.setItem('sanis_densities', JSON.stringify(Array.from(this.dynamicDensities.entries())));
+    localStorage.setItem('sanis_image_cache', JSON.stringify(Array.from(this.imageAnalysisCache.entries())));
+  }
+
+  private normalizeName(name: string): string {
+    return name.toLowerCase()
+      .replace(/cooked|raw|fresh|frozen|organic|natural|small|large|medium|piece|of|bit|some/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private readonly AVAILABLE_MODELS = [
+    'gemini-2.5-flash-lite',
+    'gemini-flash-latest',
+    'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite-preview'
+  ];
+
+  private async callWithRetry<T>(fn: (model: string) => Promise<T>, retries = 2, delay = 1000, modelIndex = 0): Promise<T> {
+    const currentModel = this.AVAILABLE_MODELS[modelIndex] || this.AVAILABLE_MODELS[0];
+    try {
+      return await fn(currentModel);
+    } catch (error: any) {
+      const errorMsg = error.message?.toLowerCase() || '';
+      const isUnavailable = errorMsg.includes('503') || errorMsg.includes('429') || errorMsg.includes('high demand') || errorMsg.includes('unavailable');
+      const isNotFound = errorMsg.includes('404') || errorMsg.includes('not found');
+
+      // If not found or unavailable, try next model
+      if ((isNotFound || isUnavailable) && modelIndex < this.AVAILABLE_MODELS.length - 1) {
+        console.log(`Model ${currentModel} failed (${isNotFound ? '404' : '503'}), trying ${this.AVAILABLE_MODELS[modelIndex + 1]}...`);
+        return this.callWithRetry(fn, retries, delay, modelIndex + 1);
+      }
+
+      // If same model but busy, retry with backoff
+      if (retries > 0 && isUnavailable) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.callWithRetry(fn, retries - 1, delay * 2, modelIndex);
+      }
+      throw error;
+    }
   }
 
   async validateImage(imageB64: string): Promise<{ isValid: boolean; reason?: string }> {
-    try {
+    return this.callWithRetry(async (model) => {
       const validationPrompt = `
         You are an image validation system for a pet food analysis app.
         Analyze this image and determine if it contains pet food that can be analyzed.
-        
-        VALID IMAGES:
-        - Clear photos of pet food in bowls, plates, or containers
-        - Kibble, wet food, raw food, treats, or home-cooked meals
-        - Canned food (opened cans showing food contents)
-        - Pet food packaging with clearly visible nutritional labels
-        - Food that is clearly visible and in focus
-        - Multiple angles of the same food
-        
-        INVALID IMAGES:
-        - Blurry or out-of-focus images where food cannot be identified
-        - Images of empty bowls or containers
-        - Closed/unopened cans or packages without visible food or labels
-        - Images of pets/animals without visible food
-        - Images of humans, furniture, or non-food objects
-        - Screenshots, memes, or text documents
-        - Very dark or overexposed images where food is not visible
-        - Non-food items (toys, accessories, etc.)
-        
-        OUTPUT JSON:
-        {
-          "isValid": boolean (true if image contains identifiable pet food or readable packaging),
-          "reason": string (if invalid, explain why: "blurry", "no_food", "empty_bowl", "not_food", "too_dark", etc.)
-        }
+        ...
       `;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        model: model,
         contents: {
           parts: [
             { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
@@ -71,14 +97,28 @@ export class GeminiService {
 
       const result = JSON.parse(response.text || '{}');
       return result;
-    } catch (error) {
+    }).catch(error => {
       console.error("Image validation failed", error);
-      // If validation fails, allow the image through (fail-open)
       return { isValid: true };
-    }
+    });
   }
 
   async analyzeMeal(imageB64: string, pet: PetProfile): Promise<MealAnalysis> {
+    // Image Cache Logic: If we've seen this exact image for this pet, reuse the result
+    // Use length and samples from start, middle, and end for a robust fingerprint
+    const imgLen = imageB64.length;
+    const sampleSize = 50;
+    const fingerprint = `${imageB64.substring(0, sampleSize)}${imageB64.substring(imgLen/2, imgLen/2 + sampleSize)}${imageB64.substring(imgLen - sampleSize)}${imgLen}`;
+    const imageKey = `${fingerprint}${pet.id}`;
+    
+    if (this.imageAnalysisCache.has(imageKey)) {
+      console.log(`[Cache Hit] Recalling analysis for image (ID: ${imageKey.substring(0, 8)}...)`);
+      return {
+        ...this.imageAnalysisCache.get(imageKey),
+        timestamp: Date.now()
+      };
+    }
+
     // First, validate the image
     const validation = await this.validateImage(imageB64);
     if (!validation.isValid) {
@@ -202,11 +242,18 @@ export class GeminiService {
       OUTPUT JSON FORMAT:
       {
         "mealName": "Specific descriptive name (e.g., 'Chicken & Rice Bowl')",
-        "calories": number (integer, no decimals, scientifically calculated),
+        "calories": number (integer),
         "protein": number (grams, 1 decimal),
         "fat": number (grams, 1 decimal),
         "carbs": number (grams, 1 decimal),
-        "ingredients": ["specific ingredient list with quantities"],
+        "ingredients": [{
+          "name": "ingredient name", 
+          "weight": number,
+          "caloriesPer100g": number,
+          "proteinPer100g": number,
+          "fatPer100g": number,
+          "carbsPer100g": number
+        }],
         "advice": "Brief personalized nutritional assessment for ${pet.name} (${pet.breed}, ${ageCategory}, ${pet.healthGoals.join('/')}) - reference their specific health goals and life stage",
         "insights": ["3 specific observations about meal balance FOR THIS PET - mention breed, age, or health goals"],
         "fridgeAdvice": ["2 specific additions to optimize meal FOR ${pet.name}'s goals: ${pet.healthGoals.join(', ')}"]
@@ -219,43 +266,237 @@ export class GeminiService {
       - Consistency: Same image should yield same results (±3% variance)
     `;
 
-    const response = await this.ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite-preview',
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
-          { text: prompt }
-        ]
-      },
-      config: {
-        temperature: 0.2,
-        topP: 0.8,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            mealName: { type: Type.STRING },
-            calories: { type: Type.NUMBER },
-            protein: { type: Type.NUMBER },
-            fat: { type: Type.NUMBER },
-            carbs: { type: Type.NUMBER },
-            ingredients: { type: Type.ARRAY, items: { type: Type.STRING } },
-            advice: { type: Type.STRING },
-            insights: { type: Type.ARRAY, items: { type: Type.STRING } },
-            fridgeAdvice: { type: Type.ARRAY, items: { type: Type.STRING } },
-          },
-          required: ['mealName', 'calories', 'protein', 'fat', 'carbs', 'ingredients', 'advice', 'insights', 'fridgeAdvice']
+    return this.callWithRetry(async (model) => {
+      const response = await this.ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/jpeg', data: imageB64 } },
+            { text: prompt }
+          ]
+        },
+        config: {
+          temperature: 0.2,
+          topP: 0.8,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mealName: { type: Type.STRING },
+              calories: { type: Type.NUMBER },
+              protein: { type: Type.NUMBER },
+              fat: { type: Type.NUMBER },
+              carbs: { type: Type.NUMBER },
+              ingredients: { 
+                type: Type.ARRAY, 
+                items: { 
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    weight: { type: Type.NUMBER },
+                    caloriesPer100g: { type: Type.NUMBER },
+                    proteinPer100g: { type: Type.NUMBER },
+                    fatPer100g: { type: Type.NUMBER },
+                    carbsPer100g: { type: Type.NUMBER }
+                  },
+                  required: ['name', 'weight', 'caloriesPer100g', 'proteinPer100g', 'fatPer100g', 'carbsPer100g']
+                } 
+              },
+              advice: { type: Type.STRING },
+              insights: { type: Type.ARRAY, items: { type: Type.STRING } },
+              fridgeAdvice: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: ['mealName', 'calories', 'protein', 'fat', 'carbs', 'ingredients', 'advice', 'insights', 'fridgeAdvice']
+          }
         }
-      }
-    });
+      });
 
-    const data = JSON.parse(response.text || '{}');
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: Date.now(),
-      ...data,
-      imageUrl: `data:image/jpeg;base64,${imageB64}`
-    };
+      const data = JSON.parse(response.text || '{}');
+      
+      // Dynamic Learning & Enforcement Logic
+      let totalCals = 0, totalProt = 0, totalFat = 0, totalCarb = 0;
+      let hasNewLearning = false;
+      
+      const ingredients = data.ingredients.map((ing: any) => {
+        const key = this.normalizeName(ing.name);
+        
+        // If we haven't learned this food yet, learn it!
+        if (!this.dynamicDensities.has(key)) {
+          this.dynamicDensities.set(key, {
+            calories: ing.caloriesPer100g,
+            protein: ing.proteinPer100g,
+            fat: ing.fatPer100g,
+            carbs: ing.carbsPer100g
+          });
+          hasNewLearning = true;
+        }
+        
+        // Enforce the learned density
+        const learned = this.dynamicDensities.get(key);
+        const factor = ing.weight / 100;
+        totalCals += learned.calories * factor;
+        totalProt += learned.protein * factor;
+        totalFat += learned.fat * factor;
+        totalCarb += learned.carbs * factor;
+        
+        return { ...ing, ...learned };
+      });
+
+      const result = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: Date.now(),
+        ...data,
+        ingredients,
+        calories: Math.round(totalCals),
+        protein: Number(totalProt.toFixed(1)),
+        fat: Number(totalFat.toFixed(1)),
+        carbs: Number(totalCarb.toFixed(1)),
+        imageUrl: `data:image/jpeg;base64,${imageB64}`
+      };
+      
+      console.log(`[Learning] Analyzed new image. Total Kcal: ${result.calories}`);
+      this.imageAnalysisCache.set(imageKey, result);
+      this.persistMemory();
+      return result;
+    });
+  }
+
+  async reAnalyzeMeal(ingredients: { name: string, weight: number }[], pet: PetProfile): Promise<{ advice: string, insights: string[], fridgeAdvice: string[] }> {
+    const ageCategory = pet.age ? (pet.age < 1 ? 'Puppy/Kitten' : pet.age > 7 ? 'Senior' : 'Adult') : 'Unknown';
+    const dailyCalorieNeed = pet.age && pet.age < 1 
+      ? Math.round(pet.weight * 85) 
+      : pet.age && pet.age > 7
+      ? Math.round(pet.weight * 55)
+      : Math.round(pet.weight * 65);
+
+    const ingredientList = ingredients.map(ing => `${ing.name}: ${ing.weight}g`).join(", ");
+    
+    // Cache logic: same ingredients + same weights = same result
+    const cacheKey = ingredients
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(ing => `${ing.name.toLowerCase()}:${ing.weight}`)
+      .join('|');
+
+    if (this.calculationCache.has(cacheKey)) {
+      console.log("[Cache] Using previous calculation for:", ingredientList);
+      return this.calculationCache.get(cacheKey);
+    }
+
+    const prompt = `
+      You are a certified veterinary nutritionist. Re-analyze this meal with the EXACT ingredients and quantities confirmed by the user.
+      
+      PET PROFILE:
+      - Name: ${pet.name} (${pet.type})
+      - Breed: ${pet.breed}
+      - Age: ${pet.age || 'N/A'} (${ageCategory})
+      - Weight: ${pet.weight}kg
+      - Allergies: ${pet.allergies || "None"}
+      - Health Goals: ${pet.healthGoals.join(", ") || "General health"}
+      
+      CONFIRMED INGREDIENTS:
+      ${ingredientList}
+      
+      TASK:
+      1. Provide accurate calories and macros for these specific weights.
+      2. Provide a personalized nutritional assessment ("advice") for ${pet.name}.
+      3. Provide 3 specific insights about the meal balance for this pet.
+      4. Provide 2 specific recommendations ("fridgeAdvice") to optimize the meal.
+      
+      IMPORTANT: Check for any allergic reactions based on ${pet.allergies}.
+      
+      OUTPUT JSON:
+      {
+        "ingredients": [{
+          "name": "...", 
+          "weight": number, 
+          "caloriesPer100g": number,
+          "proteinPer100g": number,
+          "fatPer100g": number,
+          "carbsPer100g": number
+        }],
+        "advice": "...",
+        "insights": ["...", "...", "..."],
+        "fridgeAdvice": ["...", "..."]
+      }
+    `;
+
+    return this.callWithRetry(async (model) => {
+      const response = await this.ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: [{ text: prompt }]
+        },
+        config: {
+          temperature: 0.1, // Lower temperature for more consistency
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              ingredients: { 
+                type: Type.ARRAY, 
+                items: { 
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    weight: { type: Type.NUMBER },
+                    caloriesPer100g: { type: Type.NUMBER },
+                    proteinPer100g: { type: Type.NUMBER },
+                    fatPer100g: { type: Type.NUMBER },
+                    carbsPer100g: { type: Type.NUMBER }
+                  },
+                  required: ['name', 'weight', 'caloriesPer100g', 'proteinPer100g', 'fatPer100g', 'carbsPer100g']
+                } 
+              },
+              advice: { type: Type.STRING },
+              insights: { type: Type.ARRAY, items: { type: Type.STRING } },
+              fridgeAdvice: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: ['ingredients', 'advice', 'insights', 'fridgeAdvice']
+          }
+        }
+      });
+
+      const data = JSON.parse(response.text || '{}');
+      
+      // Enforce learned densities even during re-analysis
+      let totalCals = 0, totalProt = 0, totalFat = 0, totalCarb = 0;
+      let hasNewLearning = false;
+      
+      const updatedIngredients = data.ingredients.map((ing: any) => {
+        const key = this.normalizeName(ing.name);
+        if (!this.dynamicDensities.has(key)) {
+          this.dynamicDensities.set(key, {
+            calories: ing.caloriesPer100g,
+            protein: ing.proteinPer100g,
+            fat: ing.fatPer100g,
+            carbs: ing.carbsPer100g
+          });
+          hasNewLearning = true;
+        }
+        const learned = this.dynamicDensities.get(key);
+        const factor = ing.weight / 100;
+        totalCals += learned.calories * factor;
+        totalProt += learned.protein * factor;
+        totalFat += learned.fat * factor;
+        totalCarb += learned.carbs * factor;
+        return { ...ing, ...learned };
+      });
+
+      const finalResult = { 
+        ...data, 
+        ingredients: updatedIngredients,
+        calories: Math.round(totalCals),
+        protein: Number(totalProt.toFixed(1)),
+        fat: Number(totalFat.toFixed(1)),
+        carbs: Number(totalCarb.toFixed(1))
+      };
+      
+      console.log(`[Cache Update] Re-analyzed ingredients. Total Kcal: ${finalResult.calories}`);
+      this.calculationCache.set(cacheKey, finalResult);
+      if (hasNewLearning) this.persistMemory();
+      return finalResult;
+    });
   }
 
   async generateSpeech(text: string): Promise<Uint8Array | null> {

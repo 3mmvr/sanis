@@ -25,6 +25,11 @@ export interface PetProfile {
   allergies?: string;
 }
 
+export interface Ingredient {
+  name: string;
+  weight: number; // in grams
+}
+
 export interface WaterLog {
   date: string; // YYYY-MM-DD format
   cups: number;
@@ -38,11 +43,12 @@ export interface MealAnalysis {
   protein: number;
   fat: number;
   carbs: number;
-  ingredients: string[];
+  ingredients: Ingredient[];
   advice: string;
   insights: string[];
   fridgeAdvice: string[];
   imageUrl?: string;
+  isConfirmed?: boolean;
 }
 
 export interface UserSession {

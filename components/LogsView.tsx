@@ -47,7 +47,7 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(log => 
         log.mealName.toLowerCase().includes(query) ||
-        log.ingredients.some(ing => ing.toLowerCase().includes(query))
+        log.ingredients.some(ing => ing.name.toLowerCase().includes(query))
       );
     }
 

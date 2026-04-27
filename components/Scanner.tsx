@@ -98,7 +98,7 @@ const Scanner: React.FC<ScannerProps> = ({ onClose, onComplete, pet }) => {
     } catch (err: any) {
       console.error(err);
       setIsAnalyzing(false);
-      setError(err.message || "Analysis failed. Please try a clearer photo.");
+      setError("Your AI Nutritionist encountered some issues, please try again.");
     }
   };
 

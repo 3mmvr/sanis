@@ -13,23 +13,45 @@ interface AnalysisViewProps {
 
 const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onDelete, onUpdate }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [portion, setPortion] = useState(1);
   const [ingredients, setIngredients] = useState(analysis.ingredients);
+  const [totalWeight, setTotalWeight] = useState(() => {
+    const sum = analysis.ingredients.reduce((acc, ing) => acc + ing.weight, 0);
+    // Detect if it's likely a commercial pack (simple heuristic)
+    const isPackaged = analysis.mealName.toLowerCase().match(/pack|bag|box|treat|snack|kibble/);
+    return isPackaged ? 0 : sum;
+  });
   const [editingIngredient, setEditingIngredient] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editWeight, setEditWeight] = useState(0);
+  const [isConfirmed, setIsConfirmed] = useState(analysis.isConfirmed || false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [currentAnalysis, setCurrentAnalysis] = useState(analysis);
 
-  // Update analysis when portion changes
-  const handlePortionChange = (newPortion: number) => {
-    setPortion(newPortion);
+  // Scaling logic: Adjust all ingredients based on a new total weight
+  const handleTotalWeightChange = (newTotal: number) => {
+    if (newTotal < 0) return;
+    
+    const currentTotal = ingredients.reduce((acc, ing) => acc + ing.weight, 0);
+    setTotalWeight(newTotal);
+
+    let updatedIngredients;
+    if (currentTotal === 0) {
+      // If original is 0, distribute new total evenly among ingredients
+      const evenWeight = newTotal / (ingredients.length || 1);
+      updatedIngredients = ingredients.map(ing => ({ ...ing, weight: Math.round(evenWeight) }));
+    } else {
+      // Proportional scaling
+      const factor = newTotal / currentTotal;
+      updatedIngredients = ingredients.map(ing => ({
+        ...ing,
+        weight: Math.round(ing.weight * factor)
+      }));
+    }
+
+    setIngredients(updatedIngredients);
+    setIsConfirmed(false); // Invalidate advice if weights change
     if (onUpdate) {
-      const updatedAnalysis = {
-        ...analysis,
-        calories: Math.round(analysis.calories * newPortion),
-        protein: Math.round(analysis.protein * newPortion),
-        fat: Math.round(analysis.fat * newPortion),
-        carbs: Math.round(analysis.carbs * newPortion),
-      };
-      onUpdate(updatedAnalysis);
+      onUpdate({ ...currentAnalysis, ingredients: updatedIngredients, isConfirmed: false });
     }
   };
 
@@ -43,27 +65,54 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
 
   const handleEditIngredient = (index: number) => {
     setEditingIngredient(index);
-    setEditValue(ingredients[index]);
+    setEditName(ingredients[index].name);
+    setEditWeight(ingredients[index].weight);
   };
 
   const handleSaveIngredient = (index: number) => {
     const newIngredients = [...ingredients];
-    newIngredients[index] = editValue;
+    newIngredients[index] = { name: editName, weight: Number(editWeight) };
     setIngredients(newIngredients);
     setEditingIngredient(null);
+    setIsConfirmed(false); // Require re-confirm if ingredients change
     if (onUpdate) {
-      onUpdate({ ...analysis, ingredients: newIngredients });
+      onUpdate({ ...analysis, ingredients: newIngredients, isConfirmed: false });
     }
   };
 
   const handleAddIngredient = () => {
-    const newIngredient = prompt('Enter ingredient name:');
-    if (newIngredient && newIngredient.trim()) {
-      const newIngredients = [...ingredients, newIngredient.trim()];
+    const name = prompt('Enter ingredient name:');
+    if (name) {
+      const weight = Number(prompt('Enter weight (g):') || 0);
+      const newIngredients = [...ingredients, { name, weight }];
       setIngredients(newIngredients);
+      setIsConfirmed(false);
       if (onUpdate) {
-        onUpdate({ ...analysis, ingredients: newIngredients });
+        onUpdate({ ...analysis, ingredients: newIngredients, isConfirmed: false });
       }
+    }
+  };
+
+  const handleConfirm = async () => {
+    setIsReanalyzing(true);
+    try {
+      const result = await gemini.reAnalyzeMeal(ingredients, pet);
+      setIsConfirmed(true);
+      const updatedAnalysis = { 
+        ...currentAnalysis, 
+        ...result, 
+        ingredients, 
+        isConfirmed: true 
+      };
+      setCurrentAnalysis(updatedAnalysis);
+      if (onUpdate) {
+        onUpdate(updatedAnalysis);
+      }
+    } catch (error) {
+      console.error("Re-analysis failed", error);
+      alert("Your AI Nutritionist encountered some issues, please try again.");
+    } finally {
+      setIsReanalyzing(false);
     }
   };
 
@@ -77,7 +126,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
   const speakReport = async () => {
     if (isPlaying) return;
     setIsPlaying(true);
-    const text = `Nutritional report for ${pet.name}. Today's meal is ${analysis.mealName}, containing approximately ${analysis.calories} calories. ${analysis.advice}. Recommendation: ${analysis.fridgeAdvice[0] || 'Keep up the good work.'}`;
+    const text = `Nutritional report for ${pet.name}. Today's meal is ${currentAnalysis.mealName}, containing approximately ${Math.round(currentAnalysis.calories)} calories. ${currentAnalysis.advice}. Recommendation: ${currentAnalysis.fridgeAdvice[0] || 'Keep up the good work.'}`;
     const audioData = await gemini.generateSpeech(text);
     
     if (audioData) {
@@ -99,7 +148,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
     }
   };
 
-  const adjCalories = Math.round(analysis.calories * portion);
+
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in slide-in-from-bottom duration-500 font-sans">
@@ -134,108 +183,169 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ analysis, pet, onClose, onD
                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
                <span className="text-sm font-black text-slate-400">Log &bull; {new Date(analysis.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
              </div>
-             <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-full border border-black/5">
-               <button onClick={() => handlePortionChange(Math.max(0.25, portion - 0.25))} className="text-slate-400 hover:text-black font-black transition-colors px-1 text-xl">
-                 <ICONS.Minus className="w-4 h-4" />
+             <div className="flex items-center gap-3 bg-slate-50 px-3 py-2 rounded-full border border-black/5">
+               <button onClick={() => handleTotalWeightChange(Math.max(0, totalWeight - 10))} className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-slate-400 hover:text-black transition-all active:scale-90">
+                 <ICONS.Minus className="w-3 h-3" />
                </button>
-               <span className="font-black text-sm w-12 text-center text-black">{portion.toFixed(1)}x</span>
-               <button onClick={() => handlePortionChange(portion + 0.25)} className="text-slate-400 hover:text-black font-black transition-colors px-1 text-xl">
-                 <ICONS.Plus className="w-4 h-4" />
+               <div className="flex flex-col items-center px-2">
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Weight</span>
+                 <div className="flex items-baseline gap-1">
+                   <input 
+                     type="number"
+                     value={totalWeight}
+                     onChange={(e) => handleTotalWeightChange(Number(e.target.value))}
+                     className="font-black text-sm w-12 text-center text-black bg-transparent border-none focus:outline-none p-0"
+                   />
+                   <span className="text-[10px] font-black text-black">g</span>
+                 </div>
+               </div>
+               <button onClick={() => handleTotalWeightChange(totalWeight + 10)} className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-slate-400 hover:text-black transition-all active:scale-90">
+                 <ICONS.Plus className="w-3 h-3" />
                </button>
              </div>
            </div>
 
-           <h2 className="text-2xl font-black text-black mb-6 tracking-tighter leading-tight">{analysis.mealName}</h2>
+           <h2 className="text-2xl font-black text-black mb-6 tracking-tighter leading-tight">{currentAnalysis.mealName}</h2>
 
-           {/* Floating Calorie Indicator */}
-           <div className="flex items-center gap-4 bg-[#F9F9F9] rounded-[32px] p-5 mb-8 border border-black/5 shadow-sm">
-             <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
-               <ICONS.Flame className="w-7 h-7 text-yellow-500" />
-             </div>
-             <div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-0.5">Calories</p>
-               <p className="text-3xl font-black text-black">{adjCalories}</p>
-             </div>
-           </div>
+           {/* Nutritional data shown only after confirmation */}
+           {isConfirmed && (
+             <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+               {/* Floating Calorie Indicator */}
+               <div className="flex items-center gap-4 bg-[#F9F9F9] rounded-[32px] p-5 mb-6 border border-black/5 shadow-sm">
+                 <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md">
+                   <ICONS.Flame className="w-7 h-7 text-yellow-500" />
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-0.5">Calories</p>
+                   <p className="text-3xl font-black text-black">{Math.round(currentAnalysis.calories)}</p>
+                 </div>
+               </div>
 
-           {/* Macro Stats */}
-           <div className="grid grid-cols-3 gap-3 mb-8">
-              {[
-                { label: 'Protein', value: Math.round(analysis.protein * portion), color: 'bg-red-400' },
-                { label: 'Carbs', value: Math.round(analysis.carbs * portion), color: 'bg-amber-400' },
-                { label: 'Fats', value: Math.round(analysis.fat * portion), color: 'bg-blue-400' }
-              ].map(macro => (
-                <div key={macro.label} className="bg-white border border-slate-100 p-4 rounded-[28px] flex flex-col gap-1.5 shadow-sm">
-                   <div className="flex items-center gap-2">
-                     <div className={`w-2 h-2 rounded-full ${macro.color}`} />
-                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{macro.label}</span>
-                   </div>
-                   <span className="text-xl font-black text-black">{macro.value}g</span>
-                </div>
-              ))}
-           </div>
-
-           {/* Ingredients Breakdown */}
-           <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                 <h3 className="text-lg font-black text-black">Ingredients</h3>
-                 <button onClick={handleAddIngredient} className="text-xs font-black text-yellow-500 hover:underline transition-all">+ Add more</button>
-              </div>
-              <div className="space-y-2.5">
-                 {ingredients.map((ing, i) => (
-                   <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-[24px] border border-black/5 group">
-                      <div className="flex items-center gap-2 flex-1">
-                        {editingIngredient === i ? (
-                          <input 
-                            type="text"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={() => handleSaveIngredient(i)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSaveIngredient(i)}
-                            className="font-black text-black text-sm bg-white px-2 py-1 rounded-lg border border-black/10 focus:outline-none focus:border-yellow-500 flex-1"
-                            autoFocus
-                          />
-                        ) : (
-                          <>
-                            <span className="font-black text-black text-sm">{ing}</span>
-                            <span className="text-[10px] text-slate-400 font-bold tracking-tight">&bull; {Math.round((analysis.calories/ingredients.length)*portion)} cal</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleEditIngredient(i)}
-                          className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-600"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteIngredient(i)}
-                          className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                   </div>
-                 ))}
-              </div>
-           </div>
-
-           {/* AI Assistant Insight */}
-           <div className="bg-black rounded-[40px] p-6 text-white mb-8 relative overflow-hidden shadow-2xl">
-             <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-400 rounded-full blur-[80px] opacity-10 -mr-16 -mt-16" />
-             <div className="relative">
-                <h3 className="font-black text-[9px] uppercase tracking-[0.3em] mb-4 flex items-center gap-2 text-yellow-400">
-                  <ICONS.Dog className="w-4 h-4" /> sanis Nutrition AI
-                </h3>
-                <p className="text-slate-300 font-bold italic leading-relaxed mb-6 text-base">"{analysis.advice}"</p>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.fridgeAdvice.map((item, i) => (
-                    <span key={i} className="px-4 py-2 bg-yellow-400 text-black rounded-2xl text-[10px] font-black shadow-lg shadow-yellow-400/20">+ {item}</span>
+               {/* Macro Stats */}
+               <div className="grid grid-cols-3 gap-3 mb-8">
+                  {[
+                    { label: 'Protein', value: Math.round(currentAnalysis.protein), color: 'bg-red-400' },
+                    { label: 'Carbs', value: Math.round(currentAnalysis.carbs), color: 'bg-amber-400' },
+                    { label: 'Fats', value: Math.round(currentAnalysis.fat), color: 'bg-blue-400' }
+                  ].map(macro => (
+                    <div key={macro.label} className="bg-white border border-slate-100 p-4 rounded-[28px] flex flex-col gap-1.5 shadow-sm">
+                       <div className="flex items-center gap-2">
+                         <div className={`w-2 h-2 rounded-full ${macro.color}`} />
+                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{macro.label}</span>
+                       </div>
+                       <span className="text-xl font-black text-black">{macro.value}g</span>
+                    </div>
                   ))}
-                </div>
+               </div>
              </div>
-           </div>
+           )}
+
+            {/* Ingredients Table */}
+            <div className="mb-8">
+               <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-black text-black">Ingredients</h3>
+                  <button onClick={handleAddIngredient} className="text-xs font-black text-yellow-500 hover:underline transition-all">+ Add more</button>
+               </div>
+               
+               <div className="overflow-hidden bg-slate-50 rounded-[32px] border border-black/5">
+                 <table className="w-full text-left border-collapse">
+                   <thead>
+                     <tr className="border-b border-black/5">
+                       <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Food Name</th>
+                       <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Weight</th>
+                       <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-black/5">
+                     {ingredients.map((ing, i) => (
+                       <tr key={i} className="group hover:bg-white transition-colors">
+                         <td className="px-4 py-4">
+                           {editingIngredient === i ? (
+                             <input 
+                               type="text"
+                               value={editName}
+                               onChange={(e) => setEditName(e.target.value)}
+                               className="w-full font-black text-black text-sm bg-white px-2 py-1.5 rounded-lg border border-black/10 focus:outline-none focus:border-yellow-500"
+                               autoFocus
+                             />
+                           ) : (
+                             <span className="font-black text-black text-xs block truncate max-w-[100px]">{ing.name}</span>
+                           )}
+                         </td>
+                         <td className="px-4 py-4">
+                           {editingIngredient === i ? (
+                             <div className="flex items-center gap-1">
+                               <input 
+                                 type="number"
+                                 value={editWeight}
+                                 onChange={(e) => setEditWeight(Number(e.target.value))}
+                                 className="w-14 font-black text-black text-xs bg-white px-2 py-1.5 rounded-lg border border-black/10 focus:outline-none focus:border-yellow-500"
+                               />
+                               <span className="text-[9px] font-black text-slate-400">g</span>
+                             </div>
+                           ) : (
+                             <span className="text-xs font-bold text-slate-600">{ing.weight}g</span>
+                           )}
+                         </td>
+                         <td className="px-4 py-4 text-right">
+                           {editingIngredient === i ? (
+                             <button 
+                               onClick={() => handleSaveIngredient(i)}
+                               className="bg-black text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                             >
+                               Save
+                             </button>
+                           ) : (
+                             <div className="flex items-center justify-end gap-2 transition-opacity">
+                               <button onClick={() => handleEditIngredient(i)} className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50 p-1 rounded">Edit</button>
+                               <button onClick={() => handleDeleteIngredient(i)} className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 p-1 rounded">Delete</button>
+                             </div>
+                           )}
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+
+               {!isConfirmed && (
+                 <button 
+                   onClick={handleConfirm}
+                   disabled={isReanalyzing}
+                   className="w-full mt-4 py-5 bg-yellow-400 text-black rounded-[32px] font-black text-sm uppercase tracking-widest shadow-xl shadow-yellow-400/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                 >
+                   {isReanalyzing ? (
+                     <>
+                       <div className="w-5 h-5 border-4 border-black/20 border-t-black rounded-full animate-spin" />
+                       Analyzing...
+                     </>
+                   ) : (
+                     <>
+                       <ICONS.Flame className="w-5 h-5" />
+                       Confirm Ingredients
+                     </>
+                   )}
+                 </button>
+               )}
+            </div>
+
+            {/* AI Assistant Insight */}
+            {isConfirmed && (
+              <div className="bg-black rounded-[40px] p-6 text-white mb-8 relative overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-400 rounded-full blur-[80px] opacity-10 -mr-16 -mt-16" />
+                <div className="relative">
+                   <h3 className="font-black text-[9px] uppercase tracking-[0.3em] mb-4 flex items-center gap-2 text-yellow-400">
+                     <ICONS.Dog className="w-4 h-4" /> sanis Nutrition AI
+                   </h3>
+                   <p className="text-slate-300 font-bold italic leading-relaxed mb-6 text-base">"{currentAnalysis.advice}"</p>
+                   <div className="flex flex-wrap gap-2">
+                     {currentAnalysis.fridgeAdvice.map((item, i) => (
+                       <span key={i} className="px-4 py-2 bg-yellow-400 text-black rounded-2xl text-[10px] font-black shadow-lg shadow-yellow-400/20">+ {item}</span>
+                     ))}
+                   </div>
+                </div>
+              </div>
+            )}
 
            {/* Footer Actions */}
            <div className="flex gap-3 mb-6">
