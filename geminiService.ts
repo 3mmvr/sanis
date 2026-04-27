@@ -149,6 +149,13 @@ export class GeminiService {
       ${pet.healthGoals.includes('Skin Allergies') ? '- ALLERGY MANAGEMENT: Limited ingredients, novel proteins, eliminate common allergens (chicken, beef, wheat, corn, soy)' : ''}
       ${pet.healthGoals.includes('Heart Health') ? '- CARDIAC HEALTH: Taurine (cats), L-carnitine, omega-3s, controlled sodium, avoid grain-free risks' : ''}
       
+      CRITICAL ALLERGY & INTOLERANCE FLAGGING:
+      ${pet.allergies ? `DOCUMENTED ALLERGIES/RESTRICTIONS FOR ${pet.name}: ${pet.allergies}
+      ⚠️ ABSOLUTELY FLAG if any of these ingredients are detected in the meal
+      - Even trace amounts should be highlighted as UNSAFE
+      - Be extra vigilant for hidden sources (e.g., chicken fat, beef broth)
+      - List ANY suspected allergens separately in warnings` : ''}
+      
       ANALYSIS PROTOCOL:
       
       1. VOLUME ESTIMATION (Critical for Accuracy):
