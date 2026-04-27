@@ -88,11 +88,28 @@ export function calculateStreak(history: MealAnalysis[]): StreakData {
   });
   longestStreak = Math.max(longestStreak, tempStreak);
 
-  // Calculate last 7 days for visual indicator
+  // Calculate 7 days for visual indicator - Journey Relative
   const streakDays: boolean[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const checkDate = new Date(today);
-    checkDate.setDate(checkDate.getDate() - i);
+  
+  // Find journey start (earliest log)
+  const sortedByOldest = [...history].sort((a, b) => a.timestamp - b.timestamp);
+  const journeyStart = new Date(sortedByOldest[0].timestamp);
+  journeyStart.setHours(0, 0, 0, 0);
+  
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  // How many days since journey began?
+  const daysSinceStart = Math.floor((now.getTime() - journeyStart.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // If journey is less than 7 days old, start indicator from journeyStart (Day 1)
+  // Otherwise, start from 6 days ago (sliding window)
+  const displayStart = daysSinceStart < 7 ? new Date(journeyStart) : new Date(now);
+  if (daysSinceStart >= 7) displayStart.setDate(now.getDate() - 6);
+
+  for (let i = 0; i < 7; i++) {
+    const checkDate = new Date(displayStart);
+    checkDate.setDate(displayStart.getDate() + i);
     const checkDateStr = checkDate.toDateString();
     streakDays.push(uniqueDays.has(checkDateStr));
   }

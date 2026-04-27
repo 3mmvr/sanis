@@ -20,67 +20,83 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
   const streakData = useMemo(() => calculateStreak(history), [history]);
   const weeklyStats = useMemo(() => calculateWeeklyStats(history), [history]);
 
-  const dataPoints = useMemo(() => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+  const { dataPoints, labels, journeyStart } = useMemo(() => {
+    if (history.length === 0) {
+      return { dataPoints: [0, 0, 0, 0, 0, 0, 0], labels: ['-','-','-','-','-','-','-'], journeyStart: new Date() };
+    }
     
-    let daysToShow: number;
-    let groupByDays: number;
+    const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
+    const journeyStart = new Date(sorted[0].timestamp);
+    journeyStart.setHours(0, 0, 0, 0);
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    let daysToShow = 7;
+    let groupByDays = 1;
     
     switch (timeFilter) {
       case 'week': daysToShow = 7; groupByDays = 1; break;
       case 'month': daysToShow = 30; groupByDays = 1; break;
       case '6months': daysToShow = 180; groupByDays = 7; break;
       case '12months': daysToShow = 365; groupByDays = 30; break;
-      default: daysToShow = 7; groupByDays = 1;
     }
+
+    // Determine window start: either Journey Start or (Today - daysToShow)
+    const windowStart = new Date(today);
+    windowStart.setDate(windowStart.getDate() - (daysToShow - 1));
     
-    const result: number[] = [];
+    // If we're in the first week/month, we might want to start from Journey Start to avoid empty leading bars
+    const actualStart = journeyStart > windowStart ? journeyStart : windowStart;
+    
+    const dataArray: number[] = [];
+    const labelArray: string[] = [];
     const periods = Math.ceil(daysToShow / groupByDays);
-    
-    for (let i = periods - 1; i >= 0; i--) {
-      const periodEnd = new Date(today);
-      periodEnd.setDate(today.getDate() - (i * groupByDays));
+
+    for (let i = 0; i < periods; i++) {
+      const d = new Date(actualStart);
+      d.setDate(d.getDate() + (i * groupByDays));
       
-      const periodStart = new Date(periodEnd);
-      periodStart.setDate(periodEnd.getDate() - groupByDays + 1);
-      periodStart.setHours(0, 0, 0, 0);
+      const periodEnd = new Date(d);
+      periodEnd.setDate(d.getDate() + groupByDays);
       
-      const periodTotal = history
-        .filter(meal => {
-          const mDate = new Date(meal.timestamp);
-          return mDate >= periodStart && mDate <= periodEnd;
+      const total = history
+        .filter(m => {
+          const mDate = new Date(m.timestamp);
+          return mDate >= d && mDate < periodEnd;
         })
-        .reduce((sum, meal) => sum + (meal.calories || 0), 0);
+        .reduce((sum, m) => sum + m.calories, 0);
       
-      result.push(groupByDays > 1 ? periodTotal / groupByDays : periodTotal);
+      dataArray.push(groupByDays > 1 ? total / groupByDays : total);
+      
+      // Dynamic Labels
+      if (timeFilter === 'week') {
+        labelArray.push(d.toLocaleDateString([], { weekday: 'short' }));
+      } else if (timeFilter === 'month') {
+        labelArray.push(i % 7 === 0 ? d.toLocaleDateString([], { month: 'short', day: 'numeric' }) : '');
+      } else {
+        labelArray.push(d.toLocaleDateString([], { month: 'short' }));
+      }
     }
     
-    return result;
+    return { dataPoints: dataArray, labels: labelArray, journeyStart };
   }, [history, timeFilter]);
 
   const maxVal = Math.max(...dataPoints, 1200);
-  const minVal = 0;
-  const range = maxVal || 1200;
+  const minVal = Math.min(...dataPoints.filter(v => v > 0), 0);
+  const range = maxVal - minVal || 1;
 
   // SVG Path generation
   const chartWidth = 300;
   const chartHeight = 160;
-  
   const points = dataPoints.map((val, i) => {
-    const x = dataPoints.length > 1 ? (i / (dataPoints.length - 1)) * chartWidth : chartWidth / 2;
-    const y = chartHeight - (val / range) * chartHeight;
-    return { x, y, val };
+    const x = (i / (dataPoints.length - 1)) * chartWidth;
+    const y = chartHeight - ((val - minVal) / range) * chartHeight;
+    return `${x},${y}`;
   });
 
-  const pathD = points.length > 1 
-    ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}` 
-    : `M ${points[0].x - 10},${points[0].y} L ${points[0].x + 10},${points[0].y}`;
-    
-  const areaD = points.length > 1
-    ? `M 0,${chartHeight} L ${points.map(p => `${p.x},${p.y}`).join(' L ')} L ${chartWidth},${chartHeight} Z`
-    : `M ${points[0].x - 10},${chartHeight} L ${points[0].x - 10},${points[0].y} L ${points[0].x + 10},${points[0].y} L ${points[0].x + 10},${chartHeight} Z`;
-
+  const pathD = `M ${points.join(' L ')}`;
+  const areaD = `M 0,${chartHeight} L ${points.join(' L ')} L ${chartWidth},${chartHeight} Z`;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-36">
@@ -159,47 +175,23 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
                       {/* Main Line */}
                       <path d={pathD} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       {/* Current Point */}
-                      {points.length > 0 && (
-                        <circle cx={points[points.length-1].x} cy={points[points.length-1].y} r="4" fill="#22C55E" stroke="white" strokeWidth="2" />
-                      )}
+                      <circle cx={points[points.length-1].split(',')[0]} cy={points[points.length-1].split(',')[1]} r="4" fill="#22C55E" stroke="white" strokeWidth="2" />
                    </svg>
                    
                    {/* Tooltip Mockup */}
-                   {dataPoints.length > 1 && dataPoints[dataPoints.length - 1] > 0 && (
-                   <div className="absolute bg-black text-white px-3 py-1.5 rounded-xl shadow-2xl pointer-events-none flex flex-col items-center z-10" 
-                        style={{ 
-                          left: `${(points[points.length-1].x / chartWidth) * 100}%`,
-                          top: `${(points[points.length-1].y / chartHeight) * 100}%`,
-                          transform: 'translate(-50%, -140%)'
-                        }}>
-                      <p className="text-[10px] font-black leading-none">{Math.round(dataPoints[dataPoints.length-1])} Kcal</p>
-                      <p className="text-[7px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Today</p>
+                   {dataPoints.length > 1 && dataPoints[dataPoints.length - 2] > 0 && (
+                   <div className="absolute top-[30%] left-[65%] bg-black text-white px-3 py-1.5 rounded-xl shadow-2xl pointer-events-none transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
+                      <p className="text-[10px] font-black leading-none">{Math.round(dataPoints[dataPoints.length-2])} Kcal</p>
+                      <p className="text-[7px] font-bold text-white/50 uppercase tracking-widest mt-0.5">Yesterday</p>
                       <div className="w-2 h-2 bg-black rotate-45 absolute -bottom-1" />
                    </div>
                    )}
                 </div>
 
                 <div className="absolute -bottom-6 left-10 right-0 flex justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                   {timeFilter === 'week' && (
-                     <>
-                       <span>Day 1</span><span>Day 3</span><span>Day 5</span><span>Day 7</span>
-                     </>
-                   )}
-                   {timeFilter === 'month' && (
-                     <>
-                       <span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span>
-                     </>
-                   )}
-                   {timeFilter === '6months' && (
-                     <>
-                       <span>Mo 1</span><span>Mo 2</span><span>Mo 3</span><span>Mo 4</span><span>Mo 5</span><span>Mo 6</span>
-                     </>
-                   )}
-                   {timeFilter === '12months' && (
-                     <>
-                       <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
-                     </>
-                   )}
+                   {labels.filter((_, i) => i % (timeFilter === 'week' ? 2 : 7) === 0).map((l, i) => (
+                     <span key={i}>{l || `Day ${i*7 + 1}`}</span>
+                   ))}
                 </div>
              </div>
 
@@ -236,10 +228,13 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
                 )}
              </div>
              <div className="flex items-end justify-between h-20 gap-3 px-2">
-                {weeklyStats.dailyCalories.map((calories, i) => {
-                  const maxCalories = Math.max(...weeklyStats.dailyCalories, 1);
+                {dataPoints.slice(0, 7).map((calories, i) => {
+                  const maxCalories = Math.max(...dataPoints.slice(0, 7), 1);
                   const height = maxCalories > 0 ? (calories / maxCalories) * 100 : 0;
-                  const isToday = i === 6;
+                  const d = new Date(journeyStart);
+                  d.setDate(d.getDate() + i);
+                  const isToday = d.toDateString() === new Date().toDateString();
+                  
                   return (
                     <div 
                       key={i} 
@@ -250,7 +245,7 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
                 })}
              </div>
              <div className="flex justify-between mt-3 px-2 text-[8px] font-black text-slate-300 uppercase">
-                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                {labels.slice(0, 7).map((l, i) => <span key={i}>{l}</span>)}
              </div>
           </div>
        </main>
