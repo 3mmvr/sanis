@@ -6,32 +6,34 @@ import AnalysisView from './AnalysisView';
 
 interface LogsViewProps {
   session: UserSession;
-  currentPet: PetProfile;
+  currentPet?: PetProfile;
   onBack: () => void;
   onNavigate: (view: string) => void;
   onDeleteLog: (petId: string, logId: string) => void;
   onUpdateLog: (petId: string, updatedLog: MealAnalysis) => void;
+  onAddPet: () => void;
 }
 
 type FilterType = 'today' | 'week' | 'all';
 
-const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavigate, onDeleteLog, onUpdateLog }) => {
+const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavigate, onDeleteLog, onUpdateLog, onAddPet }) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<MealAnalysis | null>(null);
 
-  const history = session.history[currentPet.id] || [];
+  const history = currentPet ? (session.history[currentPet.id] || []) : [];
 
   const handleReuse = (meal: MealAnalysis) => {
+    if (!currentPet) return;
     const reusedMeal: MealAnalysis = {
       ...meal,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
       isConfirmed: false 
     };
-    onUpdateLog(currentPet.id, reusedMeal); // onUpdateLog also handles adding if it's a new ID
+    onUpdateLog(currentPet.id, reusedMeal); 
     setActiveAnalysis(reusedMeal);
   };
 
@@ -82,6 +84,38 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
   const totalCalories = filteredLogs.reduce((sum, log) => sum + log.calories, 0);
   const totalMeals = filteredLogs.length;
 
+  if (!currentPet) {
+    return (
+      <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-24">
+        <header className="px-6 pt-8 pb-5 flex items-center gap-4 bg-white border-b border-black/5">
+          <button onClick={onBack} className="p-2 text-black bg-slate-50 rounded-full shadow-sm border border-black/5 active:scale-90 transition-all">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <h1 className="text-xl font-black text-black tracking-tight">All Logs</h1>
+        </header>
+        <main className="px-6 py-10">
+          <div className="bg-orange-50 border border-orange-200 rounded-[24px] p-5 flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-xl">⚠️</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-orange-900 font-black text-sm mb-1 leading-tight">No Pet Profile Found</p>
+              <p className="text-orange-700 text-[11px] font-bold leading-relaxed mb-3">
+                Please add at least one pet to view historical logs and nutritional data.
+              </p>
+              <button 
+                onClick={onAddPet}
+                className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-full hover:bg-orange-600 transition-colors shadow-sm"
+              >
+                + Add Your First Pet
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-24">
       {/* Header */}
@@ -100,6 +134,20 @@ const LogsView: React.FC<LogsViewProps> = ({ session, currentPet, onBack, onNavi
           <span className="text-[8px] font-black text-slate-400 uppercase">Meals</span>
         </div>
       </header>
+...
+      {/* Analysis Modal */}
+      {activeAnalysis && (
+        <AnalysisView 
+          analysis={activeAnalysis} 
+          onClose={() => setActiveAnalysis(null)} 
+          pet={currentPet}
+          onDelete={(logId) => onDeleteLog(currentPet.id, logId)}
+          onUpdate={(updatedLog) => onUpdateLog(currentPet.id, updatedLog)}
+        />
+      )}
+    </div>
+  );
+};
 
       <main className="px-6 py-5 space-y-4">
         {/* Search Bar */}

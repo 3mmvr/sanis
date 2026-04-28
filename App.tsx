@@ -413,6 +413,7 @@ const AppContent: React.FC = () => {
             currentPet={currentPet || session.pets[0]}
             onBack={() => navigate('/dashboard')}
             onNavigate={(path) => navigate(path)}
+            onAddPet={() => navigate('/onboarding')}
           />
         ) : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/settings" element={
@@ -436,6 +437,7 @@ const AppContent: React.FC = () => {
             onNavigate={(path) => navigate(path)}
             onDeleteLog={handleDeleteLog}
             onUpdateLog={handleUpdateLog}
+            onAddPet={() => navigate('/onboarding')}
           />
         ) : <LandingPage authState={authState} onGetStarted={() => navigate('/signup')} onSignIn={() => navigate('/login')} />} />
         <Route path="/about" element={<About />} />

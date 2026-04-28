@@ -564,7 +564,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
   .hero .container { flex-direction: column; text-align: center; }
   .hero-content h1 { font-size: 42px; }
   .hero-content p { margin: 0 auto 28px; }
-  .hero-content { animation: none !important; transform: translateY(-25px) !important; margin-bottom: 15px !important; }
+  .hero-content { animation: none !important; transform: translateY(-25px) !important; padding-bottom: 30px !important; }
   .hero-cta { justify-content: center; }
   .hero-image, .hero-food { display: none; }
   .footer { padding: 40px 0 20px; }

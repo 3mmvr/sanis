@@ -6,15 +6,16 @@ import { calculateStreak, calculateWeeklyStats } from '../utils/streakCalculator
 
 interface ProgressViewProps {
   session: UserSession;
-  currentPet: PetProfile;
+  currentPet?: PetProfile;
   onBack: () => void;
   onNavigate: (view: string) => void;
+  onAddPet: () => void;
 }
 
 type TimeFilter = 'week' | 'month' | '6months' | '12months';
 
-const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack, onNavigate }) => {
-  const history = session.history[currentPet.id] || [];
+const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack, onNavigate, onAddPet }) => {
+  const history = currentPet ? (session.history[currentPet.id] || []) : [];
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('week');
   
   const streakData = useMemo(() => calculateStreak(history), [history]);
@@ -97,6 +98,54 @@ const ProgressView: React.FC<ProgressViewProps> = ({ session, currentPet, onBack
 
   const pathD = `M ${points.join(' L ')}`;
   const areaD = `M 0,${chartHeight} L ${points.join(' L ')} L ${chartWidth},${chartHeight} Z`;
+
+  if (!currentPet) {
+    return (
+      <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-36">
+        <header className="px-6 pt-8 pb-5 flex items-center gap-4">
+          <button onClick={onBack} className="p-2 text-black bg-white rounded-full shadow-sm border border-black/5 active:scale-90 transition-all">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <h1 className="text-xl font-black text-black tracking-tight">Health Analytics</h1>
+        </header>
+        <main className="px-6">
+          <div className="bg-orange-50 border border-orange-200 rounded-[24px] p-5 flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-xl">⚠️</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-orange-900 font-black text-sm mb-1 leading-tight">No Pet Profile Found</p>
+              <p className="text-orange-700 text-[11px] font-bold leading-relaxed mb-3">
+                Please add at least one pet to enable health tracking and nutritional insights.
+              </p>
+              <button 
+                onClick={onAddPet}
+                className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-full hover:bg-orange-600 transition-colors shadow-sm"
+              >
+                + Add Your First Pet
+              </button>
+            </div>
+          </div>
+        </main>
+        <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-xl border-t border-black/5 pt-4 pb-8 z-40">
+          <div className="max-w-md mx-auto px-6 flex justify-between items-center relative">
+            <button onClick={() => onNavigate('dashboard')} className="flex flex-col items-center gap-1 text-slate-300 hover:text-black transition-colors">
+              <ICONS.Home className="w-5 h-5" />
+              <span className="text-[8px] font-black uppercase tracking-widest">Home</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 text-black">
+              <ICONS.Chart className="w-5 h-5" />
+              <span className="text-[8px] font-black uppercase tracking-widest">Progress</span>
+            </button>
+            <button onClick={() => onNavigate('settings')} className="flex flex-col items-center gap-1 text-slate-300 hover:text-black transition-colors">
+              <ICONS.Settings className="w-5 h-5" />
+              <span className="text-[8px] font-black uppercase tracking-widest">Settings</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#F8F8F8] pb-36">
