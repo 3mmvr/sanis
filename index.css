@@ -561,11 +561,11 @@ button { cursor: pointer; border: none; font-family: inherit; }
   .mobile-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
   .mobile-toggle.active span:nth-child(2) { opacity: 0; }
   .mobile-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-  .hero { padding-top: 100px !important; padding-bottom: 180px !important; min-height: auto !important; }
-  .hero .container { flex-direction: column; text-align: center; }
+  .hero { display: flex !important; align-items: center !important; padding-top: 80px !important; padding-bottom: 140px !important; min-height: 85vh !important; }
+  .hero .container { flex: 1; display: flex !important; flex-direction: column; justify-content: center !important; text-align: center; }
   .hero-content h1 { font-size: 42px; }
   .hero-content p { margin: 0 auto 28px; }
-  .hero-content { animation: none !important; transform: none !important; margin-bottom: 140px !important; }
+  .hero-content { animation: none !important; transform: none !important; margin-bottom: 0 !important; }
   .hero-cta { justify-content: center; }
   .hero-image, .hero-food { display: none; }
   .footer { padding: 40px 0 20px; }
