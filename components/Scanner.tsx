@@ -156,7 +156,7 @@ const Scanner: React.FC<ScannerProps> = ({ onClose, onComplete, pet }) => {
                   )}
                 </div>
                 <p className="text-white/60 font-bold text-center px-8">
-                  {isDragging ? "Drop to Scan" : "Tap to Scan or Drag & Drop Photo"}
+                  {isDragging ? "Drop to Scan" : "Tap to Scan or Import Photo"}
                   <br/>
                   <span className="text-[10px] uppercase font-black tracking-widest mt-2 block opacity-40">Always use the same bowl for more accurate results.</span>
                 </p>
@@ -167,7 +167,6 @@ const Scanner: React.FC<ScannerProps> = ({ onClose, onComplete, pet }) => {
               ref={fileInputRef} 
               className="hidden" 
               accept="image/*" 
-              capture="environment" 
               onChange={handleFileChange} 
             />
           </div>
